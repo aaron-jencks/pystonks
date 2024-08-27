@@ -1,4 +1,4 @@
-# Algo Trader
+# Pystonks
 This project aims to automate day trading on the stock market using AI.
 
 # Installation
