@@ -1,6 +1,5 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 alpaca-py==0.28.3
-pyside6
 pygad
 pytimeparse
 numpy
