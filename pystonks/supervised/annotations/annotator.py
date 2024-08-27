@@ -1,13 +1,18 @@
 import datetime as dt
+import os
 import re
+import sys
 import tkinter as tk
 from argparse import ArgumentParser
 from pathlib import Path
-from signal import signal
-from typing import List, Optional, Dict, Callable
+from typing import List, Optional, Dict
 
 import matplotlib.pyplot as plt
 import torch
+
+root_project_path = os.path.abspath(os.path.join('../../..'))
+if root_project_path not in sys.path:
+    sys.path.append(root_project_path)
 
 from pystonks.apis.sql import SQL_DATE_FMT
 from pystonks.daemons.screener import hscreener
@@ -22,24 +27,18 @@ from pystonks.supervised.annotations.utils.annotations.nn import NeuralNetworkAn
 from pystonks.supervised.annotations.utils.gui import GeneralStockPlot
 from pystonks.supervised.annotations.utils.metric_setup import MetricSetupFunc, SMA_SETUP_REGEX, setup_sma, \
     EMA_SETUP_REGEX, setup_ema, setup_signal, setup_macd
-from pystonks.supervised.annotations.utils.metrics import SMAStockMetric, StockMetricPlotterModule, StockMetric, \
-    EMAStockMetric, MACDStockMetric, SignalLineMetric, StockMetricModule
+from pystonks.supervised.annotations.utils.metrics import StockMetric, \
+    StockMetricModule
 from pystonks.supervised.annotations.utils.models import PlotStateInfo, GeneralStockPlotInfo
 from pystonks.supervised.annotations.utils.plotters import DefaultBarNewsPlotter, DefaultAnnotationPlotter, \
     DefaultStatePlotter, DefaultVolumePlotter, DefaultDerivativeStatePlotter, AutoAnnotationPlotter
-from pystonks.supervised.annotations.utils.tk_modules import SMAInfoModule, EMAInfoModule
 from pystonks.supervised.training.definitions import INPUT_COUNT
 from pystonks.utils.config import read_config
 from pystonks.utils.gui.tk_modules import TkLabelModule, TkFrameModule, TkButtonModule, TkRadioSelection, \
-    TkListboxModule, TkCanvasModule
-from pystonks.utils.processing import change_since_news, datetime_to_second_offset, create_smas_win, \
-    calculate_normalized_derivatives, fill_in_sparse_bars, truncate_datetime, \
-    generate_percentages_since_bar_from_bars, trim_zero_bars, generate_percentages_since_previous_from_bars
-
-# TODO move this up above the project imports
-# root_project_path = os.path.abspath(os.path.join('../..'))
-# if root_project_path not in sys.path:
-#     sys.path.append(root_project_path)
+    TkListboxModule
+from pystonks.utils.processing import change_since_news, datetime_to_second_offset, fill_in_sparse_bars, \
+    truncate_datetime, \
+    generate_percentages_since_bar_from_bars, trim_zero_bars
 
 
 ANNOTATOR_VERSION = '2.0.1'
