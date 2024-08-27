@@ -489,7 +489,8 @@ if __name__ == '__main__':
     ap.add_argument(
         '--metrics',
         type=str, nargs='*',
-        help='indicates the metrics to use, use --metric-list to see possible metrics'
+        help='indicates the metrics to use, use --metric-list to see possible metrics, if not passed, '
+             'ema_12_2, ema_26_2, macd, and signal are used'
     )
     ap.add_argument(
         '--metric_list',
@@ -547,6 +548,13 @@ if __name__ == '__main__':
         print('loading saved model...')
         model = torch.load(args.model)
         annotator = NeuralNetworkAnnotator(1000, INPUT_COUNT, model)
+
+    metrics = args.metrics
+    if len(metrics) == 0:
+        metrics = [
+            'ema_12_2', 'ema_26_2',
+            'macd', 'signal'
+        ]
 
     win = Window(
         controllers, filters, annotator,
