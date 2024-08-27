@@ -550,7 +550,7 @@ if __name__ == '__main__':
         annotator = NeuralNetworkAnnotator(1000, INPUT_COUNT, model)
 
     metrics = args.metrics
-    if len(metrics) == 0:
+    if not metrics or len(metrics) == 0:
         metrics = [
             'ema_12_2', 'ema_26_2',
             'macd', 'signal'
@@ -558,7 +558,7 @@ if __name__ == '__main__':
 
     win = Window(
         controllers, filters, annotator,
-        args.metrics, metric_dict,
+        metrics, metric_dict,
         args.bar_min, args.show_finished, args.dark
     )
     win.loop()
