@@ -1,0 +1,134 @@
+@startuml object_model
+package trading {
+    package trader {
+        enum TradeActionType {
+            BUY_HALF
+            BUY_ALL
+            BUY_10
+            BUY_100
+            BUY_1000
+            SELL_HALF
+            SELL_ALL
+            SELL_10
+            SELL_100
+            SELL_1000
+            HOLD
+        }
+
+        interface Trader {
+            + balance() -> float
+            + shares() -> int
+            + position() -> Position
+            + buy(count: int, price: float)
+            + sell(count: int, price: float)
+            + cancel_all()
+            + hbars(start: datetime, duration: timedelta, buckets: TimeFrame) -> BarSet
+            + bars(buckets: TimeFrame) -> BarSet
+            + hquotes(start: datetime, duration: timedelta) -> QuoteSet
+            + quotes() -> Quote
+            + htrades(start: datetime, duration: timedelta) -> Trades
+            + trades() -> Trades
+        }
+    }
+
+    package alpaca {
+        class AlpacaTrader {
+            + api_key: str
+            + api_secret: str
+            + paper: bool
+            + symbol: str
+            - mdclient: StockHistoricalDataClient
+            - tclient: TradingClient
+
+            + connect()
+            - handle_request()
+        }
+
+        Trader <-- AlpacaTrader
+    }
+
+    package simulated {
+        object SimulationResults {
+            + total_profit: float
+            + buys: int
+            + sells: int
+            + mistakes: int
+            + bottoms: int
+            + entries: int
+            + exits: int
+            + cancels: int
+            + holds: int
+        }
+
+        class SimulatedTrader {
+            + init_cash: float
+            + cash: float
+            + owned: int
+            + buys: int
+            + sells: int
+            + mistakes: int
+            + bottoms: int
+            + entries: int
+            + exits: int
+            + cancels: int
+
+            + reset()
+            + get_results() -> SimulationResults
+        }
+
+        AlpacaTrader <|-- SimulatedTrader
+        SimulationResults <.. SimulatedTrader
+    }
+
+    package meta {
+        package filters {
+            interface TickerFilter {
+                +passes(symbol: str, float: int, day: Optional[datetime]) -> bool
+            }
+
+            class FloatFilter {
+                + limit: int
+            }
+
+            TickerFilter <-- FloatFilter
+
+            class YahooFilter {
+                + price: float
+                + cso: float
+            }
+
+            TickerFilter <-- YahooFilter
+        }
+        package ticker {
+            class Ticker {
+                + symbol: str
+                + float: int
+                + current_price: float
+                + change_since_open: float
+            }
+
+            abstract class TickerFetcher {
+                + filters: []TickerFilter
+                + tickers(blacklist: Set[str]) -> []Ticker
+                + htickers(day: datetime, blacklist: Set[str]) -> []Ticker
+                + check_filters(symbol: str, float: int, day: Optional[datetime]) -> bool
+            }
+
+            TickerFilter <.. TickerFetcher
+            Ticker <.. TickerFetcher
+        }
+
+        package polyhoo {
+            class PolyHooTicker {
+                + poly_key: str
+                + float_cache: Path
+            }
+
+            TickerFetcher <-- PolyHooTicker
+        }
+    }
+}
+
+package screening {
+}
+@enduml
