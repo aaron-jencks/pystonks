@@ -42,7 +42,7 @@ from pystonks.utils.processing import change_since_news, datetime_to_second_offs
 #     sys.path.append(root_project_path)
 
 
-ANNOTATOR_VERSION = '2.0.0'
+ANNOTATOR_VERSION = '2.0.1'
 
 
 class Window:
