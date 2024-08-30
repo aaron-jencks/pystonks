@@ -1,30 +1,26 @@
 from abc import ABC, abstractmethod
-from cProfile import label
-from signal import signal
 from typing import Callable, List, Tuple, Optional
-
-from torch.cuda import graph
 
 from pystonks.models import Bar
 from pystonks.supervised.annotations.utils.models import StockPlotter, StockAxesInfo, GeneralStockPlotInfo, \
     PlotStateInfo
 from pystonks.supervised.annotations.utils.tk_modules import SMAInfoModule, EMAInfoModule
 from pystonks.utils.gui.tk_modules import TkLabelModule
-from pystonks.utils.processing import calculate_normalized_derivatives, datetime_to_second_offset, create_sma, \
-    create_continuous_sma, create_continuous_ema, create_ema
+from pystonks.utils.processing import calculate_normalized_derivatives, create_continuous_sma, create_continuous_ema, \
+    create_ema
 
-METRIC_HANDLER = Callable[[List[Bar]], Tuple[List[float], List[float]]]
+METRIC_HANDLER = Callable[[List[Bar]], Tuple[List[int], List[float]]]
 
 
 class StockMetric(ABC):
     def __init__(self):
-        self.result: Optional[Tuple[List[float], List[float]]] = None
+        self.result: Optional[Tuple[List[int], List[float]]] = None
 
     @abstractmethod
-    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         pass
 
-    def get_data(self, data: Optional[GeneralStockPlotInfo] = None) -> Tuple[List[float], List[float]]:
+    def get_data(self, data: Optional[GeneralStockPlotInfo] = None) -> Tuple[List[int], List[float]]:
         if not self.result:
             if not data:
                 raise Exception('metric fetched without bar data to process')
@@ -107,8 +103,7 @@ class StockMetricPlotterModule(StockMetricModule, StockPlotter, ABC):
         self.linewidth = linewidth
         self.zorder = zorder
 
-    def prepare_plotting_data(self,
-                              state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def prepare_plotting_data(self, state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         return self.get_data(data)
 
     def plot(self, axes: StockAxesInfo, state: PlotStateInfo, data: GeneralStockPlotInfo):
@@ -135,7 +130,7 @@ class SMAStockMetric(StockMetricPlotterModule):
         super().__init__(f'SMA {self.module.window}', self.module.raw, self.module.d1, self.module.d2,
                          linewidth, zorder, colors, label_format)
 
-    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         previous_closes  = data.previous_closes[:-self.module.window]
         return create_continuous_sma(previous_closes, data.times, data.closes, self.module.window)
 
@@ -149,7 +144,7 @@ class EMAStockMetric(StockMetricPlotterModule):
                          self.module.raw, self.module.d1, self.module.d2,
                          linewidth, zorder, colors, label_format)
 
-    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         previous_closes = data.previous_closes[:-self.module.window]
         return create_continuous_ema(
             previous_closes, data.times, data.closes,
@@ -167,12 +162,12 @@ class MACDStockMetric(StockMetricPlotterModule):
         super().__init__(f'MACD', raw_label, d1_label, d2_label, linewidth, zorder, colors, label_format)
 
     def prepare_plotting_data(self,
-                              state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+                              state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         graph_avg = sum(data.closes) / len(data.closes)
         times, values = self.get_data(data)
         return times, [v + graph_avg for v in values]
 
-    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         dat, day = self.ema_a.get_data(data)
         dbt, dby = self.ema_b.get_data(data)
 
@@ -196,12 +191,11 @@ class SignalLineMetric(StockMetricPlotterModule):
             linewidth, zorder, colors, label_format
         )
 
-    def prepare_plotting_data(self,
-                              state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def prepare_plotting_data(self, state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         graph_avg = sum(data.closes) / len(data.closes)
         times, values = self.get_data(data)
         return times, [v + graph_avg for v in values]
 
-    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[float], List[float]]:
+    def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         times, bars = self.macd.get_data(data)
         return create_ema(times, bars, self.module.window, self.module.smoothing)

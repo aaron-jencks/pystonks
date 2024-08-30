@@ -10,6 +10,8 @@ from typing import List, Optional, Dict
 import matplotlib.pyplot as plt
 import torch
 
+from pystonks.supervised.annotations.utils.annotations.macd import MACDAnnotator
+
 root_project_path = os.path.abspath(os.path.join('../../..'))
 if root_project_path not in sys.path:
     sys.path.append(root_project_path)
@@ -542,7 +544,7 @@ if __name__ == '__main__':
         ChangeSinceNewsFilter(controllers.market, min_limit=0.1)
     ]
 
-    annotator = PeakAnnotator()
+    annotator = MACDAnnotator()
     if args.use_model and args.model.exists():
         print('loading saved model...')
         model = torch.load(args.model)
