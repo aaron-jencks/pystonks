@@ -364,7 +364,7 @@ class Window:
 
         for idx, act in self.auto_annotator.auto_annotations:
             self.controllers.create_annotation(Annotation(self.ticker,
-                                                          self.bars[idx+1].timestamp,
+                                                          self.bars[idx].timestamp,
                                                           act))
 
         self.update_annotation_entry_count()
