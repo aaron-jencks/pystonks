@@ -21,7 +21,7 @@ class MACDAnnotator(Annotator):
         if 'macd' not in metrics or 'signal' not in metrics:
             raise Exception('macd annotator requires macd and signal metrics to be present')
 
-        ema_26: EMAStockMetric = metrics['ema_26_2']
+        ema_26: EMAStockMetric = metrics['ema_26_2.0']
         macd: MACDStockMetric = metrics['macd']
         signal_line: SignalLineMetric = metrics['signal']
 
@@ -36,29 +36,32 @@ class MACDAnnotator(Annotator):
         last_sell = -1
         result = []
 
-        macd_raw = data_arrays_to_dict(*macd.get_data(data))
-        signal_raw = data_arrays_to_dict(*signal_line.get_data(data))
-        ema_d1 = data_arrays_to_dict(*ema_26.first_derivative)
-        ema_d2 = data_arrays_to_dict(*ema_26.first_derivative)
+        _, macd_raw = macd.get_data(data)
+        _, signal_raw = signal_line.get_data(data)
+        ema_d1 = ema_26.first_derivative
+        ema_d2 = ema_26.second_derivative
 
-        for b in tqdm(data.bars[start:], desc='Creating Automated MACD/Signal Annotations'):
-            ts = datetime_to_second_offset(b.timestamp)
-            if ts in macd_raw and ts in signal_raw:
-                diff = abs(macd_raw[ts] - signal_raw[ts])
-                if diff < 0.1:
-                    if ts in ema_d2:
-                        d2v = ema_d2[ts]
-                        if d2v > 0:
-                            result.append((ts, TradeActions.BUY_HALF))
+        for bi, b in tqdm(enumerate(data.bars[start:]), desc='Creating Automated MACD/Signal Annotations'):
+            idx = start + bi
+
+            if idx < signal_line.module.window:
+                continue
+
+            diff = abs(macd_raw[idx] - signal_raw[idx - signal_line.module.window])
+            if diff < 0.001:
+                if 0 < idx < len(data.bars) - 1:
+                    d2v = ema_d2[idx-1]
+                    if d2v > 0:
+                        result.append((idx, TradeActions.BUY_HALF))
+                        holding = True
+                    elif d2v < 0 and holding:
+                        result.append((idx, TradeActions.SELL_HALF))
+                    elif idx > 0:
+                        d1v = ema_d1[idx-1]
+                        if d1v > 0:
+                            result.append((idx, TradeActions.BUY_HALF))
                             holding = True
-                        elif d2v < 0 and holding:
-                            result.append((ts, TradeActions.SELL_HALF))
-                        elif ts in ema_d1:
-                            d1v = ema_d1[ts]
-                            if d1v > 0:
-                                result.append((ts, TradeActions.BUY_HALF))
-                                holding = True
-                            elif d1v < 0:
-                                result.append((ts, TradeActions.SELL_HALF))
+                        elif d1v < 0:
+                            result.append((idx, TradeActions.SELL_HALF))
 
         return result
