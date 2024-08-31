@@ -298,8 +298,12 @@ class Window:
 
         self.current_tickers.insert(0, self.ticker)
 
+        original_ticker = self.ticker
         self.ticker = self.previous_tickers.pop()
         while not self.show_finished and self.controllers.are_annotations_finished(self.ticker, self.date):
+            if len(self.previous_tickers) == 0:
+                self.ticker = original_ticker
+                break
             self.ticker = self.previous_tickers.pop()
 
         self.plot_state.reset()
