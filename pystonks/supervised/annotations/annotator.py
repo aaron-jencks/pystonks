@@ -9,6 +9,7 @@ from typing import List, Optional, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import torch
+from tqdm import tqdm
 
 root_project_path = os.path.abspath(os.path.join('../../..'))
 if root_project_path not in sys.path:
@@ -473,7 +474,7 @@ class Window:
         # we need to know
         # value at buy, current amount held
         holds: List[Tuple[float, float]] = []
-        for anno in self.plot_data.annotations:
+        for anno in tqdm(self.plot_data.annotations, desc='Simulating annotations'):
             idx = self.__get_index_from_time(datetime_to_second_offset(anno.timestamp))
             bar = self.plot_data.bars[idx]
             if anno.action == TradeActions.BUY_HALF:
