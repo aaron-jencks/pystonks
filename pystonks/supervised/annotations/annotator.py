@@ -342,7 +342,7 @@ class Window:
 
         _, _, index = self.plot_state.selected
         self.controllers.create_annotation(Annotation(self.ticker,
-                                                      self.bars[index+1].timestamp,
+                                                      self.bars[index].timestamp,
                                                       TradeActions(self.radio_selection.get())))
         self.update_annotation_entry_count()
         self.update_annotations()
