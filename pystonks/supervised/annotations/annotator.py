@@ -9,7 +9,6 @@ from typing import List, Optional, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import torch
-from db import first
 
 root_project_path = os.path.abspath(os.path.join('../../..'))
 if root_project_path not in sys.path:
