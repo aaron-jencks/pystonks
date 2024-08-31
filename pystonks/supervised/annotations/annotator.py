@@ -10,8 +10,6 @@ from typing import List, Optional, Dict
 import matplotlib.pyplot as plt
 import torch
 
-from pystonks.supervised.annotations.utils.annotations.macd import MACDAnnotator
-
 root_project_path = os.path.abspath(os.path.join('../../..'))
 if root_project_path not in sys.path:
     sys.path.append(root_project_path)
@@ -24,7 +22,7 @@ from pystonks.models import Bar
 from pystonks.supervised.annotations.cluster import AnnotatorCluster
 from pystonks.supervised.annotations.models import TradeActions, Annotation
 from pystonks.supervised.annotations.utils.annotations.annotator import Annotator
-from pystonks.supervised.annotations.utils.annotations.inflection import PeakAnnotator
+from pystonks.supervised.annotations.utils.annotations.macd import MACDAnnotator
 from pystonks.supervised.annotations.utils.annotations.nn import NeuralNetworkAnnotator
 from pystonks.supervised.annotations.utils.gui import GeneralStockPlot
 from pystonks.supervised.annotations.utils.metric_setup import MetricSetupFunc, SMA_SETUP_REGEX, setup_sma, \
