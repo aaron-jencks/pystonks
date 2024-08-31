@@ -352,7 +352,7 @@ class Window:
             return
 
         _, _, index = self.plot_state.selected
-        self.controllers.delete_annotation(self.ticker, self.bars[index+1].timestamp)
+        self.controllers.delete_annotation(self.ticker, self.bars[index].timestamp)
         self.update_annotation_entry_count()
         self.update_annotations()
 
