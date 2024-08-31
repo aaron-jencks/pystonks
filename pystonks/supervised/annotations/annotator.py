@@ -5,10 +5,11 @@ import sys
 import tkinter as tk
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 import matplotlib.pyplot as plt
 import torch
+from db import first
 
 root_project_path = os.path.abspath(os.path.join('../../..'))
 if root_project_path not in sys.path:
@@ -121,6 +122,10 @@ class Window:
                        side=tk.LEFT, fill=tk.X, expand=True)
         TkButtonModule('>', self.__inc_index, self.dark, index_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
+
+        self.predicted_profit = TkLabelModule(self.dark, frame.widget)
+        self.predicted_errors = TkLabelModule(self.dark, frame.widget)
+        self.predicted_errors_description = TkLabelModule(self.dark, frame.widget)
 
         self.selected_open = TkLabelModule(self.dark, frame.widget)
         self.selected_close = TkLabelModule(self.dark, frame.widget)
@@ -461,10 +466,82 @@ class Window:
             for metric in self.labeled_metrics:
                 metric.update_labels(time, self.plot_data)
 
+    def find_simulated_profit(self) -> Tuple[float, int, int, str]:
+        first_error_index = -1
+        error_type = ''
+        errors = 0
+        current_value = 1.
+        # we need to know
+        # value at buy, current amount held
+        holds: List[Tuple[float, float]] = []
+        for anno in self.plot_data.annotations:
+            idx = self.__get_index_from_time(datetime_to_second_offset(anno.timestamp))
+            bar = self.plot_data.bars[idx]
+            if anno.action == TradeActions.BUY_HALF:
+                if current_value == 0:
+                    errors += 1
+                    if first_error_index < 0:
+                        first_error_index = idx
+                        error_type = 'over buy'
+                    continue
+
+                current_value /= 2
+                holds.append((bar.close, current_value))
+            elif anno.action == TradeActions.BUY_ALL:
+                if current_value == 0:
+                    errors += 1
+                    if first_error_index < 0:
+                        first_error_index = idx
+                        error_type = 'over buy'
+                    continue
+
+                holds.append((bar.close, current_value))
+                current_value = 0.
+            elif anno.action == TradeActions.SELL_HALF:
+                if len(holds) == 0:
+                    errors += 1
+                    if first_error_index < 0:
+                        first_error_index = idx
+                        error_type = 'over sell'
+                    continue
+
+                new_holds = []
+                for ov, amt in holds:
+                    pchange = bar.close / ov
+                    namt = amt / 2
+                    if namt > 0:
+                        current_value += namt * pchange
+                        new_holds.append((ov, namt))
+            elif anno.action == TradeActions.SELL_ALL:
+                if len(holds) == 0:
+                    errors += 1
+                    if first_error_index < 0:
+                        first_error_index = idx
+                        error_type = 'over sell'
+                    continue
+
+                for ov, amt in holds:
+                    pchange = bar.close / ov
+                    current_value += amt * pchange
+
+                holds = []
+
+        return current_value, errors, first_error_index, error_type
+
+    def update_simulated_profit(self):
+        profit, errors, error_idx, error_type = self.find_simulated_profit()
+        self.predicted_profit.set(f'Predicted Profit: {profit:.2f}')
+        self.predicted_errors.set(f'Simulated Errors: {errors}')
+        if error_idx < 0:
+            self.predicted_errors_description.set('First Error Description: No errors found')
+        else:
+            self.predicted_errors_description.set(f'First Error Description: {error_type} @ {error_idx}')
+
     def update_annotations(self):
         self.annotations = self.controllers.retrieve_all_annotations(self.ticker, self.date)
         self.plot_data.annotations = self.annotations
         self.update_listbox()
+        self.update_simulated_profit()
         self.update_display()
 
     def update_listbox(self):
