@@ -31,7 +31,7 @@ class HistoricalNewsDataAPI(ABC):
         pass
 
 
-class HistoricalMarketDataAPI(HistoricalNewsDataAPI, ABC):
+class HistoricalMarketDataAPI(ABC):
     @abstractmethod
     def was_market_open(self, date: dt.datetime) -> bool:
         pass
@@ -56,7 +56,7 @@ class NewsDataAPI(HistoricalNewsDataAPI, ABC):
         pass
 
 
-class MarketDataAPI(HistoricalMarketDataAPI, NewsDataAPI, ABC):
+class MarketDataAPI(HistoricalMarketDataAPI, ABC):
     @abstractmethod
     def is_market_open(self) -> bool:
         pass
@@ -97,10 +97,11 @@ class SymbolDataAPI(ABC):
 
 
 class UnifiedAPI(TradingAPI, MarketDataAPI, SymbolDataAPI):
-    def __init__(self, trader: TradingAPI, market: MarketDataAPI, symbols: SymbolDataAPI):
+    def __init__(self, trader: TradingAPI, market: MarketDataAPI, news: NewsDataAPI, symbols: SymbolDataAPI):
         self.trader = trader
         self.market = market
         self.symbols = symbols
+        self.news_api = news
 
     def buy(self, symbol: str, quantity: int, price: float):
         return self.trader.buy(symbol, quantity, price)
@@ -140,10 +141,10 @@ class UnifiedAPI(TradingAPI, MarketDataAPI, SymbolDataAPI):
         return self.market.quotes(symbol)
 
     def historical_news(self, symbol: str, start: dt.datetime, dur: dt.timedelta) -> List[News]:
-        return self.market.historical_news(symbol, start, dur)
+        return self.news_api.historical_news(symbol, start, dur)
 
     def news(self, symbol: str) -> List[News]:
-        return self.market.news(symbol)
+        return self.news_api.news(symbol)
 
     def get_ticker_symbols(self, timestamp: dt.datetime) -> List[str]:
         return self.symbols.get_ticker_symbols(timestamp)

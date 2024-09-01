@@ -620,7 +620,7 @@ if __name__ == '__main__':
     ])
 
     filters = [
-        ChangeSinceNewsFilter(controllers.market, min_limit=0.1)
+        ChangeSinceNewsFilter(controllers.market, controllers.news_api, min_limit=0.1)
     ]
 
     annotator = MACDAnnotator()

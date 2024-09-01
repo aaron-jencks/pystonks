@@ -3,7 +3,7 @@ from asyncio import run as arun
 import datetime as dt
 from typing import Optional
 
-from pystonks.facades import SymbolDataAPI, MarketDataAPI
+from pystonks.facades import SymbolDataAPI, MarketDataAPI, NewsDataAPI
 from pystonks.utils.processing import change_since_news, fill_in_sparse_bars, truncate_datetime
 
 
@@ -99,21 +99,22 @@ class ChangeSinceOpenFilter(IntervalFilter):
 
 
 class ChangeSinceNewsFilter(TickerFilter):
-    def __init__(self, market_api: MarketDataAPI, min_limit: float = 0.):
+    def __init__(self, market_api: MarketDataAPI, news_api: NewsDataAPI, min_limit: float = 0.):
         super().__init__()
         self.min = min_limit
         self.market_client = market_api
+        self.news_client = news_api
 
     def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
         if day is not None:
-            news = self.market_client.historical_news(symbol, day, dt.timedelta(days=1))
+            news = self.news_client.historical_news(symbol, day, dt.timedelta(days=1))
             if len(news) == 0:
                 return False
             if self.min <= 0:
                 return True
             bars = self.market_client.historical_bars(symbol, day, dt.timedelta(days=1))
         else:
-            news = self.market_client.news(symbol)
+            news = self.news_client.news(symbol)
             if len(news) == 0:
                 return False
             if self.min <= 0:

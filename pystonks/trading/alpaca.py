@@ -10,7 +10,7 @@ from alpaca.common import Sort, APIError
 
 from pystonks.models import Bar, HistoricalQuote, Quote, Trade, News
 
-from pystonks.facades import TradingAPI, MarketDataAPI
+from pystonks.facades import TradingAPI, MarketDataAPI, NewsDataAPI
 from pystonks.utils.processing import process_interval, find_bars, timeframe_to_delta, truncate_datetime
 from pystonks.apis.sql import SQL_DATE_FMT
 from pystonks.utils.structures.caching import CacheAPI, CachedClass
@@ -18,7 +18,7 @@ from pystonks.utils.structures.caching import CacheAPI, CachedClass
 RATE_LIMIT = 60. / 200.
 
 
-class AlpacaTrader(CachedClass, MarketDataAPI, TradingAPI):
+class AlpacaTrader(CachedClass, MarketDataAPI, TradingAPI, NewsDataAPI):
     def __init__(self, api_key: str, api_secret: str, paper: bool, cache: CacheAPI):
         super().__init__(cache)
         self.api_key = api_key
