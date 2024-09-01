@@ -237,7 +237,7 @@ class Window:
 
     def __update_ticker_data(self):
         self.bars = self.get_date_bars(self.ticker, self.date, dt.timedelta(days=1))
-        self.news = self.controllers.historical_news(self.ticker, self.date, dt.timedelta(days=1) - dt.timedelta(seconds=1))
+        self.news = self.controllers.historical_news(self.ticker, self.date, dt.timedelta(days=1))
         self.__find_entry_index()
         self.plot_data = GeneralStockPlotInfo(self.entry_index, self.bars, self.news, self.annotations)
         self.__get_historical_data()
