@@ -25,7 +25,13 @@ class TradingAPI(ABC):
         pass
 
 
-class HistoricalMarketDataAPI(ABC):
+class HistoricalNewsDataAPI(ABC):
+    @abstractmethod
+    def historical_news(self, symbol: str, start: dt.datetime, dur: dt.timedelta) -> List[News]:
+        pass
+
+
+class HistoricalMarketDataAPI(HistoricalNewsDataAPI, ABC):
     @abstractmethod
     def was_market_open(self, date: dt.datetime) -> bool:
         pass
@@ -43,12 +49,14 @@ class HistoricalMarketDataAPI(ABC):
     def historical_quotes(self, symbol: str, start: dt.datetime, dur: dt.timedelta) -> List[HistoricalQuote]:
         pass
 
+
+class NewsDataAPI(HistoricalNewsDataAPI, ABC):
     @abstractmethod
-    def historical_news(self, symbol: str, start: dt.datetime, dur: dt.timedelta) -> List[News]:
+    def news(self, symbol: str) -> List[News]:
         pass
 
 
-class MarketDataAPI(HistoricalMarketDataAPI, ABC):
+class MarketDataAPI(HistoricalMarketDataAPI, NewsDataAPI, ABC):
     @abstractmethod
     def is_market_open(self) -> bool:
         pass
@@ -63,10 +71,6 @@ class MarketDataAPI(HistoricalMarketDataAPI, ABC):
 
     @abstractmethod
     def quotes(self, symbol: str) -> Quote:
-        pass
-
-    @abstractmethod
-    def news(self, symbol: str) -> List[News]:
         pass
 
 
