@@ -123,16 +123,20 @@ class Window:
         TkButtonModule('>', self.__inc_index, self.dark, index_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.predicted_profit = TkLabelModule(self.dark, frame.widget)
-        self.predicted_errors = TkLabelModule(self.dark, frame.widget)
-        self.predicted_errors_description = TkLabelModule(self.dark, frame.widget)
+        column_frame = TkFrameModule(self.dark, frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        left_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        right_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        self.selected_open = TkLabelModule(self.dark, frame.widget)
-        self.selected_close = TkLabelModule(self.dark, frame.widget)
-        self.selected_high = TkLabelModule(self.dark, frame.widget)
-        self.selected_low = TkLabelModule(self.dark, frame.widget)
-        self.selected_volume = TkLabelModule(self.dark, frame.widget)
-        self.selected_time = TkLabelModule(self.dark, frame.widget)
+        self.predicted_profit = TkLabelModule(self.dark, right_column_frame.widget)
+        self.predicted_errors = TkLabelModule(self.dark, right_column_frame.widget)
+        self.predicted_errors_description = TkLabelModule(self.dark, right_column_frame.widget)
+
+        self.selected_open = TkLabelModule(self.dark, right_column_frame.widget)
+        self.selected_close = TkLabelModule(self.dark, right_column_frame.widget)
+        self.selected_high = TkLabelModule(self.dark, right_column_frame.widget)
+        self.selected_low = TkLabelModule(self.dark, right_column_frame.widget)
+        self.selected_volume = TkLabelModule(self.dark, right_column_frame.widget)
+        self.selected_time = TkLabelModule(self.dark, right_column_frame.widget)
 
         for m in self.metrics:
             found = False
@@ -142,7 +146,7 @@ class Window:
                         m,
                         self.metric_dict, self.labeled_metrics,
                         self.pre_plotters, self.post_plotters,
-                        self.linewidth, self.dark, frame.widget
+                        self.linewidth, self.dark, right_column_frame.widget
                     )
                     found = True
                     break
@@ -233,7 +237,7 @@ class Window:
 
     def __update_ticker_data(self):
         self.bars = self.get_date_bars(self.ticker, self.date, dt.timedelta(days=1))
-        self.news = self.controllers.historical_news(self.ticker, self.date, dt.timedelta(days=1))
+        self.news = self.controllers.historical_news(self.ticker, self.date, dt.timedelta(days=1) - dt.timedelta(seconds=1))
         self.__find_entry_index()
         self.plot_data = GeneralStockPlotInfo(self.entry_index, self.bars, self.news, self.annotations)
         self.__get_historical_data()
