@@ -83,9 +83,9 @@ def setup_macd(
 
     macd = MACDStockMetric(
         metric_dict['ema_12_2.0'], metric_dict['ema_26_2.0'],
-        TkLabelModule(dark, master, **pack_kwargs),
-        TkLabelModule(dark, master, **pack_kwargs),
-        TkLabelModule(dark, master, **pack_kwargs),
+        TkLabelModule(dark=dark, master=master, **pack_kwargs),
+        TkLabelModule(dark=dark, master=master, **pack_kwargs),
+        TkLabelModule(dark=dark, master=master, **pack_kwargs),
         linewidth, 1
     )
     labeled_metrics.append(macd)

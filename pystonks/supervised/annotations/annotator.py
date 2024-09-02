@@ -36,7 +36,7 @@ from pystonks.supervised.annotations.utils.plotters import DefaultBarNewsPlotter
 from pystonks.supervised.training.definitions import INPUT_COUNT
 from pystonks.utils.config import read_config
 from pystonks.utils.gui.tk_modules import TkLabelModule, TkFrameModule, TkButtonModule, TkRadioSelection, \
-    TkListboxModule
+    TkListboxModule, TkToggleButtonModule
 from pystonks.utils.processing import change_since_news, datetime_to_second_offset, fill_in_sparse_bars, \
     truncate_datetime, \
     generate_percentages_since_bar_from_bars, trim_zero_bars
@@ -112,11 +112,11 @@ class Window:
 
         frame = TkFrameModule(self.dark, self.root_tk, side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        self.entry_index_label = TkLabelModule(self.dark, frame.widget)
+        self.entry_index_label = TkLabelModule(dark=self.dark, master=frame.widget)
 
-        index_frame = TkFrameModule(self.dark, frame.widget, fill=tk.X)
+        index_frame = TkFrameModule(dark=self.dark, master=frame.widget, fill=tk.X)
 
-        self.selected_index = TkLabelModule(self.dark, index_frame.widget)
+        self.selected_index = TkLabelModule(dark=self.dark, master=index_frame.widget)
 
         TkButtonModule('<', self.__dec_index, self.dark, index_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
@@ -124,19 +124,21 @@ class Window:
                        side=tk.LEFT, fill=tk.X, expand=True)
 
         column_frame = TkFrameModule(self.dark, frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        left_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
-        right_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        left_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.LEFT, fill=tk.BOTH, expand=True)
+        right_column_frame = TkFrameModule(self.dark, column_frame.widget, side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.predicted_profit = TkLabelModule(self.dark, right_column_frame.widget)
-        self.predicted_errors = TkLabelModule(self.dark, right_column_frame.widget)
-        self.predicted_errors_description = TkLabelModule(self.dark, right_column_frame.widget)
+        TkLabelModule('Metrics:', self.dark, left_column_frame.widget)
 
-        self.selected_open = TkLabelModule(self.dark, right_column_frame.widget)
-        self.selected_close = TkLabelModule(self.dark, right_column_frame.widget)
-        self.selected_high = TkLabelModule(self.dark, right_column_frame.widget)
-        self.selected_low = TkLabelModule(self.dark, right_column_frame.widget)
-        self.selected_volume = TkLabelModule(self.dark, right_column_frame.widget)
-        self.selected_time = TkLabelModule(self.dark, right_column_frame.widget)
+        self.predicted_profit = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.predicted_errors = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.predicted_errors_description = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+
+        self.selected_open = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.selected_close = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.selected_high = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.selected_low = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.selected_volume = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
+        self.selected_time = TkLabelModule(dark=self.dark, master=right_column_frame.widget)
 
         for m in self.metrics:
             found = False
@@ -153,15 +155,20 @@ class Window:
             if not found:
                 raise Exception(f'unrecognized metric pattern: {m}')
 
+        self.metric_toggles = {
+            lbl: TkToggleButtonModule(self.handle_metric_toggle, lbl, self.dark, left_column_frame.widget)
+            for lbl in self.metrics
+        }
+
         radio_values = []
         for en in TradeActions:
             if en.name == 'ACTION_COUNT':
                 continue
             radio_values.append((en.name, en.value))
 
-        self.radio_selection = TkRadioSelection(radio_values, self.dark, frame.widget, anchor=tk.W)
+        self.radio_selection = TkRadioSelection(radio_values, self.dark, column_frame.widget, anchor=tk.W)
 
-        button_frame = TkFrameModule(self.dark, frame.widget, fill=tk.X)
+        button_frame = TkFrameModule(self.dark, column_frame.widget, fill=tk.X)
 
         TkButtonModule('Add Annotation', self.__add_annotation, self.dark, button_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
@@ -175,9 +182,9 @@ class Window:
                        side=tk.LEFT, fill=tk.X, expand=True)
 
         self.annotations = []
-        self.anno_listbox = TkListboxModule(self.__on_list_select, self.dark, frame.widget, fill=tk.BOTH, expand=True)
+        self.anno_listbox = TkListboxModule(self.__on_list_select, self.dark, column_frame.widget, fill=tk.BOTH, expand=True)
 
-        next_frame = TkFrameModule(self.dark, frame.widget, fill=tk.X)
+        next_frame = TkFrameModule(self.dark, column_frame.widget, fill=tk.X)
         TkButtonModule('Previous', self.previous_ticker, self.dark, next_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
         TkButtonModule('Next', self.next_ticker, self.dark, next_frame.widget,
@@ -187,7 +194,7 @@ class Window:
         TkButtonModule('Skip Remaining', self.skip_day, self.dark, next_frame.widget,
                        side=tk.LEFT, fill=tk.X, expand=True)
 
-        self.entry_count = TkLabelModule(self.dark, frame.widget)
+        self.entry_count = TkLabelModule(dark=self.dark, master=column_frame.widget)
 
         self.update_annotation_entry_count()
         self.next_day()
@@ -473,6 +480,9 @@ class Window:
 
             for metric in self.labeled_metrics:
                 metric.update_labels(time, self.plot_data)
+
+    def handle_metric_toggle(self, state: bool):
+        pass
 
     def find_simulated_profit(self) -> Tuple[float, int, int, str]:
         first_error_index = -1

@@ -7,9 +7,9 @@ from pystonks.utils.gui.tk_modules import TkLabelModule
 class SMAInfoModule:
     def __init__(self, window: int, dark: bool = False, master: Optional[tk.Misc] = None, **pack_kwargs):
         self.window = window
-        self.raw = TkLabelModule(dark, master, **pack_kwargs)
-        self.d1 = TkLabelModule(dark, master, **pack_kwargs)
-        self.d2 = TkLabelModule(dark, master, **pack_kwargs)
+        self.raw = TkLabelModule(dark=dark, master=master, **pack_kwargs)
+        self.d1 = TkLabelModule(dark=dark, master=master, **pack_kwargs)
+        self.d2 = TkLabelModule(dark=dark, master=master, **pack_kwargs)
 
 
 class EMAInfoModule(SMAInfoModule):
