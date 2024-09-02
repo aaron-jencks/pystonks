@@ -72,13 +72,22 @@ class MACDAnnotator(Annotator):
         ema_d1 = ema_26.first_derivative
         ema_d2 = ema_26.second_derivative
 
+        macd_offset = 0
+        if len(macd_raw) < len(data.bars):
+            macd_offset = len(data.bars) - len(macd_raw)
+
         for bi, b in tqdm(enumerate(data.bars[start:]), desc='Creating Automated MACD/Signal Annotations'):
-            idx = start + bi
+            idx = start + bi - macd_offset
 
             if idx < signal_line.module.window:
                 continue
 
-            crossover = detect_macd_signal_crossover(idx, macd_raw, idx - signal_line.module.window, signal_raw)
+            crossover = detect_macd_signal_crossover(
+                idx,
+                macd_raw,
+                idx - signal_line.module.window,
+                signal_raw
+            )
             if crossover == CrossoverTypes.NONE:
                 continue
             elif crossover == CrossoverTypes.POSITIVE and (last_buy < 0 or idx - last_buy > 10):
