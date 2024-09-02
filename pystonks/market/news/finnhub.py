@@ -53,10 +53,21 @@ class FinnhubNewsAPI(CachedClass, NewsDataAPI):
             params=(symbol, date.strftime(SQL_DATE_FMT))
         )
 
-    def news(self, symbol: str) -> List[News]:
+    def news_request(self, symbol: str, date: str) -> List[dict]:
         self.handle_request()
+        while True:
+            try:
+                return self.client.company_news(symbol, date, date)
+            except finnhub.exceptions.FinnhubAPIException as e:
+                if e.status_code == 429:
+                    print('hit rate limit on finnhub controller, sleeping for a bit')
+                    time.sleep(1)
+                else:
+                    raise e
+
+    def news(self, symbol: str) -> List[News]:
         date = dt.date.today()
-        data = self.client.company_news(symbol, date.strftime(SQL_DATE_FMT), date.strftime(SQL_DATE_FMT))
+        data = self.news_request(symbol, date.strftime(SQL_DATE_FMT))
         return [
             News(
                 symbol,
@@ -73,9 +84,7 @@ class FinnhubNewsAPI(CachedClass, NewsDataAPI):
             return self.check_exists(symbol, date)
 
         def fetcher(date: dt.datetime) -> List[News]:
-            self.handle_request()
-            date = dt.date.today()
-            data = self.client.company_news(symbol, date.strftime(SQL_DATE_FMT), date.strftime(SQL_DATE_FMT))
+            data = self.news_request(symbol, date.strftime(SQL_DATE_FMT))
             return [
                 News(
                     symbol,
