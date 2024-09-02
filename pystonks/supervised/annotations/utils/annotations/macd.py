@@ -1,3 +1,4 @@
+import enum
 from typing import Dict, List, Tuple
 
 from tqdm import tqdm
@@ -11,6 +12,36 @@ from pystonks.utils.processing import datetime_to_second_offset
 
 def data_arrays_to_dict(times: List[int], values: List[float]) -> Dict[int, float]:
     return {t:v for t, v in zip(times, values)}
+
+
+class CrossoverTypes(enum.Enum):
+    NONE = 0
+    NEGATIVE = 1
+    POSITIVE = 2
+
+
+def detect_macd_signal_crossover(
+        macd_idx: int, macd: List[float],
+        signal_idx: int, signal: List[float]
+) -> CrossoverTypes:
+    if macd_idx == 0 or signal_idx == 0:
+        return CrossoverTypes.NONE
+
+    pm = macd[macd_idx-1]
+    ps = signal[signal_idx-1]
+
+    if pm == ps:
+        return CrossoverTypes.NONE
+
+    cm = macd[macd_idx]
+    cs = signal[signal_idx]
+
+    if cm == cs:
+        return CrossoverTypes.NEGATIVE if pm > ps else CrossoverTypes.POSITIVE
+    elif pm > ps:
+        return CrossoverTypes.NEGATIVE if cm < cs else CrossoverTypes.NONE
+
+    return CrossoverTypes.POSITIVE if cm > cs else CrossoverTypes.NONE
 
 
 class MACDAnnotator(Annotator):
@@ -47,21 +78,15 @@ class MACDAnnotator(Annotator):
             if idx < signal_line.module.window:
                 continue
 
-            diff = abs(macd_raw[idx] - signal_raw[idx - signal_line.module.window])
-            if diff < 0.001:
-                if 0 < idx < len(data.bars) - 1:
-                    d2v = ema_d2[idx-1]
-                    if d2v > 0:
-                        result.append((idx, TradeActions.BUY_HALF))
-                        holding = True
-                    elif d2v < 0 and holding:
-                        result.append((idx, TradeActions.SELL_HALF))
-                    elif idx > 0:
-                        d1v = ema_d1[idx-1]
-                        if d1v > 0:
-                            result.append((idx, TradeActions.BUY_HALF))
-                            holding = True
-                        elif d1v < 0:
-                            result.append((idx, TradeActions.SELL_HALF))
+            crossover = detect_macd_signal_crossover(idx, macd_raw, idx - signal_line.module.window, signal_raw)
+            if crossover == CrossoverTypes.NONE:
+                continue
+            elif crossover == CrossoverTypes.POSITIVE and (last_buy < 0 or idx - last_buy > 10):
+                if 0 < idx < len(data.bars) - 1 and (ema_d2[idx-1] > 0 or ema_d1[idx-1] > 0):
+                    result.append((idx, TradeActions.BUY_HALF))
+                    holding = True
+            elif crossover == CrossoverTypes.NEGATIVE and holding:
+                if 0 < idx < len(data.bars) - 1 and (ema_d2[idx-1] < 0 or ema_d1[idx-1] < 0):
+                    result.append((idx, TradeActions.SELL_HALF))
 
         return result
