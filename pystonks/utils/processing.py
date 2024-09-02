@@ -5,6 +5,7 @@ from alpaca.data import TimeFrame, TimeFrameUnit
 
 from pystonks.models import Bar, News, Trade
 
+
 DATED_CALLER = Callable[[dt.datetime], Any]
 DATED_CHECKER = Callable[[dt.datetime], bool]
 DATED_SAVER = Callable[[dt.datetime, Any], None]
@@ -408,4 +409,3 @@ def generate_percentages_since_bar_from_bars(reference: Bar, bars: List[Bar]) ->
         result.append(pb)
 
     return result
-

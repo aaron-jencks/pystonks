@@ -4,6 +4,7 @@ from typing import Callable, List, Tuple, Optional
 from pystonks.models import Bar
 from pystonks.supervised.annotations.utils.models import StockPlotter, StockAxesInfo, GeneralStockPlotInfo, \
     PlotStateInfo
+from pystonks.supervised.annotations.utils.processing import place_on_avg
 from pystonks.supervised.annotations.utils.tk_modules import SMAInfoModule, EMAInfoModule
 from pystonks.utils.gui.tk_modules import TkLabelModule
 from pystonks.utils.processing import calculate_normalized_derivatives, create_continuous_sma, create_continuous_ema, \
@@ -167,9 +168,8 @@ class MACDStockMetric(StockMetricPlotterModule):
 
     def prepare_plotting_data(self,
                               state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
-        graph_avg = sum(data.closes) / len(data.closes)
         times, values = self.get_data(data)
-        return times, [v + graph_avg for v in values]
+        return times, place_on_avg(state, data, times, values)
 
     def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         dat, day = self.ema_a.get_data(data)
@@ -196,9 +196,8 @@ class SignalLineMetric(StockMetricPlotterModule):
         )
 
     def prepare_plotting_data(self, state: PlotStateInfo, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
-        graph_avg = sum(data.closes) / len(data.closes)
         times, values = self.get_data(data)
-        return times, [v + graph_avg for v in values]
+        return times, place_on_avg(state, data, times, values)
 
     def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         times, bars = self.macd.get_data(data)
