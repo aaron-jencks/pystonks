@@ -62,7 +62,7 @@ class FinnhubNewsAPI(CachedClass, NewsDataAPI):
                 symbol,
                 dt.datetime.fromtimestamp(n['datetime'], tz=dt.UTC),
                 n['id'], n['source'], n['headline'], n['url'],
-                dt.datetime.fromtimestamp(n['datetime'])
+                dt.datetime.fromtimestamp(n['datetime'], tz=dt.UTC)
             )
             for n in data
         ]
@@ -81,7 +81,7 @@ class FinnhubNewsAPI(CachedClass, NewsDataAPI):
                     symbol,
                     dt.datetime.fromtimestamp(n['datetime'], tz=dt.UTC),
                     n['id'], n['source'], n['headline'], n['url'],
-                    dt.datetime.fromtimestamp(n['datetime'])
+                    dt.datetime.fromtimestamp(n['datetime'], tz=dt.UTC)
                 )
                 for n in data
             ]
