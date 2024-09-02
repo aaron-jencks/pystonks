@@ -532,6 +532,13 @@ class Window:
                 new_holds = []
                 for ov, amt in holds:
                     pchange = bar.close / ov
+
+                    if pchange < 1:
+                        errors += 1
+                        if first_error_index < 0:
+                            first_error_index = idx
+                            error_type = 'buy high, sell low'
+
                     namt = amt / 2
                     if namt > 0:
                         current_value += namt * pchange
@@ -546,6 +553,13 @@ class Window:
 
                 for ov, amt in holds:
                     pchange = bar.close / ov
+
+                    if pchange < 1:
+                        errors += 1
+                        if first_error_index < 0:
+                            first_error_index = idx
+                            error_type = 'buy high, sell low'
+
                     current_value += amt * pchange
 
                 holds = []
