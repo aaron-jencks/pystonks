@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Callable
 
 import matplotlib.pyplot as plt
 import tkinter as tk
@@ -36,8 +36,8 @@ class TkFrameModule(TkBaseModule):
 
 
 class TkLabelModule(TkBaseModule):
-    def __init__(self, dark: bool = False, master: Optional[tk.Misc] = None, **pack_kwargs):
-        self.var = tk.StringVar()
+    def __init__(self, default_value: str = '', dark: bool = False, master: Optional[tk.Misc] = None, **pack_kwargs):
+        self.var = tk.StringVar(value=default_value)
         self.label = tk.Label(master, textvariable=self.var)
         super().__init__(self.label, dark, master, **pack_kwargs)
 
@@ -46,6 +46,37 @@ class TkLabelModule(TkBaseModule):
 
     def set(self, text: str):
         self.var.set(text)
+
+
+class TkToggleButtonModule(TkBaseModule):
+    def __init__(
+            self,
+            callback: Callable[[bool], None],
+            default_text: str = '',
+            dark: bool = False, master: Optional[tk.Misc] = None,
+            default_state: bool = True,
+            **pack_kwargs
+    ):
+        self.callback = callback
+        self.toggle_status = tk.IntVar(value=int(default_state))
+        self.text_var = tk.StringVar(value=default_text)
+        self.frame = tk.Frame(master)
+        self.checkbox = tk.Checkbutton(self.frame, variable=self.toggle_status, command=self.handle_toggle)
+        self.label = tk.Label(self.frame, textvariable=self.text_var)
+        super().__init__(self.frame, dark, master, **pack_kwargs)
+
+    def pack(self, **kwargs):
+        self.checkbox.pack(side=tk.LEFT)
+        self.label.pack(side=tk.RIGHT)
+        super().pack(**kwargs)
+
+    def setup_darkmode(self):
+        self.frame.configure(background=DARK_MODE_COLOR)
+        self.checkbox.configure(background=DARK_MODE_COLOR)
+        self.label.configure(background=DARK_MODE_COLOR, foreground='white')
+
+    def handle_toggle(self):
+        self.callback(self.toggle_status.get() == 1)
 
 
 class TkButtonModule(TkBaseModule):
