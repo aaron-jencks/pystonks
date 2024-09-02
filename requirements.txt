@@ -1,17 +1,18 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 alpaca-py==0.28.3
-pygad
-pytimeparse
-numpy
-tqdm
-polygon
-yfinance
+db-sqlite3
+finnhub-python
+jsonpickle
 matplotlib
 mplfinance
+numpy
 pandas
-db-sqlite3
-jsonpickle
+polygon
+pygad
+pytimeparse
 tk
 torch
-torchvision
 torchaudio
+torchvision
+tqdm
+yfinance
