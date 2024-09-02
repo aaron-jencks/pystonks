@@ -1,4 +1,5 @@
 import datetime as dt
+import http.client
 import time
 from typing import List
 
@@ -62,8 +63,12 @@ class FinnhubNewsAPI(CachedClass, NewsDataAPI):
                 if e.status_code == 429:
                     print('hit rate limit on finnhub controller, sleeping for a bit')
                     time.sleep(1)
+                    continue
                 else:
                     raise e
+            except http.client.RemoteDisconnected as e:
+                print('finnhub terminated the connection, trying again')
+                continue
 
     def news(self, symbol: str) -> List[News]:
         date = dt.date.today()
