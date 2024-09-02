@@ -476,7 +476,7 @@ class Window:
 
             self.selected_index.set(f'Index: {index}/{len(self.plot_data.times) - 1}')
             self.selected_open.set(f'Open: ${bar.open:0.2f}')
-            self.selected_close.set(f'Close: ${close:0.2f}')
+            self.selected_close.set(f'Close: ${bar.close:0.2f}')
             self.selected_high.set(f'High: ${bar.high:0.2f}')
             self.selected_low.set(f'Low: ${bar.low:0.2f}')
             self.selected_volume.set(f'Volume: {int(bar.volume)}')
@@ -500,7 +500,7 @@ class Window:
         holds: List[Tuple[float, float]] = []
         for anno in tqdm(self.plot_data.annotations, desc='Simulating annotations'):
             idx = self.__get_index_from_time(datetime_to_second_offset(anno.timestamp))
-            bar = self.plot_data.bars[idx]
+            bar = self.bars[idx]  # use the non-percent data
             if anno.action == TradeActions.BUY_HALF:
                 if current_value == 0:
                     errors += 1
