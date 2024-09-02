@@ -28,6 +28,7 @@ repository that looks something like this:
   "alpaca_key": "your alpaca key",
   "alpaca_secret": "your alpaca secret",
   "polygon_key": "your polygon key",
+  "finnhub_key": "your finnhub key", 
   "db_location": "the absolute path of where you'd like the database to be",
   "paper": true // or false
 }

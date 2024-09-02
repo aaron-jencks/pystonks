@@ -9,6 +9,7 @@ class Config:
         self.alpaca_key = sjson['alpaca_key']
         self.alpaca_secret = sjson['alpaca_secret']
         self.polygon_key = sjson['polygon_key']
+        self.finnhub_key = sjson['finnhub_key']
         self.paper = sjson['paper']
         self.db_location = pathlib.Path(sjson['db_location'])
 
