@@ -2,19 +2,19 @@ import datetime as dt
 from pathlib import Path
 from typing import List, Optional
 
-from pystonks.apis.alpolyhoo import AlPolyHooStaticFilterAPI
+from pystonks.apis.alpolyhoo import AlFinnPolyHooStaticFilterAPI
 from pystonks.apis.sql import SqliteAPI
 from pystonks.market.filter import StaticTickerFilter
 from pystonks.supervised.annotations.controllers.annotations import AnnotationAPI
 from pystonks.supervised.annotations.models import Annotation
 
 
-class AnnotatorCluster(AlPolyHooStaticFilterAPI):
+class AnnotatorCluster(AlFinnPolyHooStaticFilterAPI):
     def __init__(self, db: Path, alpaca_key: str, alpaca_secret: str,
-                 polygon_key: str, static_filters: List[StaticTickerFilter], paper: bool = True):
+                 polygon_key: str, finnhub_key: str, static_filters: List[StaticTickerFilter], paper: bool = True):
         self.cache = SqliteAPI(db)
         self.annotations = AnnotationAPI(self.cache)
-        super().__init__(alpaca_key, alpaca_secret, polygon_key, paper, static_filters, self.cache)
+        super().__init__(alpaca_key, alpaca_secret, polygon_key, finnhub_key, paper, static_filters, self.cache)
 
     def count(self, symbol: Optional[str] = '', timestamp: Optional[dt.datetime] = None) -> int:
         return self.annotations.count(symbol, timestamp)

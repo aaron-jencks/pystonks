@@ -615,9 +615,13 @@ if __name__ == '__main__':
     # Progress
     # aaaa
 
-    controllers = AnnotatorCluster(config.db_location, config.alpaca_key, config.alpaca_secret, config.polygon_key, [
-        StaticFloatFilter(upper_limit=10000000)
-    ])
+    controllers = AnnotatorCluster(
+        config.db_location,
+        config.alpaca_key, config.alpaca_secret, config.polygon_key, config.finnhub_key,
+        [
+            StaticFloatFilter(upper_limit=10000000)
+        ]
+    )
 
     filters = [
         ChangeSinceNewsFilter(controllers.market, controllers.news_api, min_limit=0.1)

@@ -2,6 +2,7 @@ from typing import List
 
 from pystonks.facades import UnifiedAPI
 from pystonks.market.filter import StaticTickerFilter
+from pystonks.market.news.finnhub import FinnhubNewsAPI
 from pystonks.market.polyhoo import PolyHooSymbolData, StaticFilteredPolyHooSymbolData
 from pystonks.trading.alpaca import AlpacaTrader
 from pystonks.utils.structures.caching import CacheAPI
@@ -20,3 +21,12 @@ class AlPolyHooStaticFilterAPI(UnifiedAPI):
         alpaca = AlpacaTrader(alpaca_key, alpaca_secret, paper, cache)
         polyhoo = StaticFilteredPolyHooSymbolData(polygon_key, static_filters, cache)
         super().__init__(alpaca, alpaca, alpaca, polyhoo)
+
+
+class AlFinnPolyHooStaticFilterAPI(UnifiedAPI):
+    def __init__(self, alpaca_key: str, alpaca_secret: str, polygon_key: str, finnhub_key: str, paper: bool,
+                 static_filters: List[StaticTickerFilter], cache: CacheAPI):
+        alpaca = AlpacaTrader(alpaca_key, alpaca_secret, paper, cache)
+        polyhoo = StaticFilteredPolyHooSymbolData(polygon_key, static_filters, cache)
+        finnhub_api = FinnhubNewsAPI(finnhub_key, cache)
+        super().__init__(alpaca, alpaca, finnhub_api, polyhoo)
