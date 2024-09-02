@@ -63,7 +63,7 @@ def setup_ema(
     metric = EMAStockMetric(module, linewidth, 1)
     labeled_metrics.append(metric)
     pre_plotters.append(metric)
-    metric_dict[f'ema_{module.window}_{module.smoothing:.1f}'] = metric
+    metric_dict[name] = metric
 
 
 def setup_macd(
@@ -78,11 +78,11 @@ def setup_macd(
     if not m:
         return
 
-    if 'ema_12_2.0' not in metric_dict or 'ema_26_2.0' not in metric_dict:
+    if 'ema_12_2' not in metric_dict or 'ema_26_2' not in metric_dict:
         raise Exception('cannot create macd without ema_12_2 and ema_26_2 created first')
 
     macd = MACDStockMetric(
-        metric_dict['ema_12_2.0'], metric_dict['ema_26_2.0'],
+        metric_dict['ema_12_2'], metric_dict['ema_26_2'],
         TkLabelModule(dark=dark, master=master, **pack_kwargs),
         TkLabelModule(dark=dark, master=master, **pack_kwargs),
         TkLabelModule(dark=dark, master=master, **pack_kwargs),

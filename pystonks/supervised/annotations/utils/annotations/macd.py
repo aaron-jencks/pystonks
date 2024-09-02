@@ -21,7 +21,7 @@ class MACDAnnotator(Annotator):
         if 'macd' not in metrics or 'signal' not in metrics:
             raise Exception('macd annotator requires macd and signal metrics to be present')
 
-        ema_26: EMAStockMetric = metrics['ema_26_2.0']
+        ema_26: EMAStockMetric = metrics['ema_26_2']
         macd: MACDStockMetric = metrics['macd']
         signal_line: SignalLineMetric = metrics['signal']
 

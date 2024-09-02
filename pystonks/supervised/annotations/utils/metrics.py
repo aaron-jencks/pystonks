@@ -15,6 +15,7 @@ METRIC_HANDLER = Callable[[List[Bar]], Tuple[List[int], List[float]]]
 class StockMetric(ABC):
     def __init__(self):
         self.result: Optional[Tuple[List[int], List[float]]] = None
+        self.enabled = True
 
     @abstractmethod
     def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
@@ -107,6 +108,9 @@ class StockMetricPlotterModule(StockMetricModule, StockPlotter, ABC):
         return self.get_data(data)
 
     def plot(self, axes: StockAxesInfo, state: PlotStateInfo, data: GeneralStockPlotInfo):
+        if not self.enabled:
+            return
+
         times, raw = self.prepare_plotting_data(state, data)
         if self.first_derivative is None:
             self.process_derivatives(data)

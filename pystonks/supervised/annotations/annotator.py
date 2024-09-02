@@ -156,7 +156,11 @@ class Window:
                 raise Exception(f'unrecognized metric pattern: {m}')
 
         self.metric_toggles = {
-            lbl: TkToggleButtonModule(self.handle_metric_toggle, lbl, self.dark, left_column_frame.widget)
+            lbl: TkToggleButtonModule(
+                self.handle_metric_toggle,
+                lbl,
+                self.dark, left_column_frame.widget
+            )
             for lbl in self.metrics
         }
 
@@ -482,7 +486,9 @@ class Window:
                 metric.update_labels(time, self.plot_data)
 
     def handle_metric_toggle(self, state: bool):
-        pass
+        for lbl in self.metric_toggles:
+            self.metric_dict[lbl].enabled = self.metric_toggles[lbl].toggle_status.get() == 1
+        self.update_display()
 
     def find_simulated_profit(self) -> Tuple[float, int, int, str]:
         first_error_index = -1
