@@ -18,6 +18,9 @@ class StockMetric(ABC):
         self.result: Optional[Tuple[List[int], List[float]]] = None
         self.enabled = True
 
+    def reset(self):
+        self.result = None
+
     @abstractmethod
     def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         pass
@@ -40,6 +43,11 @@ class StockMetricModule(StockMetric, ABC):
         self.label_format = label_format
         self.first_derivative: Optional[List[float]] = None
         self.second_derivative: Optional[List[float]] = None
+
+    def reset(self):
+        super().reset()
+        self.first_derivative = None
+        self.second_derivative = None
 
     def process_derivatives(self, data: GeneralStockPlotInfo):
         times, data = self.get_data(data)

@@ -256,6 +256,8 @@ class Window:
         self.plot_data.update_bars(pbars)
         self.auto_annotator.process_annotations(self.entry_index, self.plot_data)
         self.root_tk.title(f'Annotating stock market data for {self.ticker} on {self.date.strftime(SQL_DATE_FMT)}')
+        for m in self.metric_dict:
+            self.metric_dict[m].reset()
 
     def get_tickers(self):
         self.controllers.cache.disable_commiting()
