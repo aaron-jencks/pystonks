@@ -21,7 +21,7 @@ def process_interval(start: dt.datetime, duration: dt.timedelta,
     current = start
     stop = start + duration
 
-    if stop.date() > dt.date.today() or (stop.date() > dt.date.today() and not exclusive_end):
+    if stop.date() >= dt.date.today() and not exclusive_end:
         raise Exception('invalid interval, end date is >= today')
 
     result = []

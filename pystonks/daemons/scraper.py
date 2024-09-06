@@ -5,12 +5,13 @@ from typing import List
 
 from tqdm import tqdm
 
-from pystonks.apis.alpolyhoo import AlPolyHooStaticFilterAPI
+from pystonks.apis.alpolyhoo import AlPolyHooStaticFilterAPI, AlFinnPolyHooStaticFilterAPI
 from pystonks.apis.sql import SqliteAPI, SQL_DATE_FMT
 from pystonks.daemons.screener import hscreener
 from pystonks.facades import UnifiedAPI
 from pystonks.market.filter import StaticFloatFilter, ChangeSinceNewsFilter, TickerFilter
 from pystonks.utils.config import read_config
+from pystonks.utils.processing import truncate_datetime
 
 
 def get_tickers(date: dt.datetime, cache: SqliteAPI, controllers: UnifiedAPI, filters: List[TickerFilter]) -> List[str]:
@@ -50,14 +51,14 @@ def fetch_market_data(date: dt.datetime, cache: SqliteAPI, controllers: UnifiedA
 
 def data_scraper(cache: SqliteAPI, controllers: UnifiedAPI, filters: List[TickerFilter]):
     cache.create_table('scraper_processed', 'date text primary key')
-    current_date = dt.datetime.utcnow()
+    current_date = truncate_datetime(dt.datetime.now(dt.UTC))
     today_parsed = False
     while True:
         # repeatedly check for new days to finish
-        if dt.datetime.utcnow().hour >= 21 and not today_parsed:
+        if dt.datetime.now(dt.UTC).hour >= 21 and not today_parsed:
             today_parsed = False
-        if dt.datetime.utcnow().hour < 14 and not today_parsed:
-            fetch_market_data(dt.datetime.utcnow() - dt.timedelta(days=1), cache, controllers, filters)
+        if dt.datetime.now(dt.UTC).hour < 14 and not today_parsed:
+            fetch_market_data(truncate_datetime(dt.datetime.now(dt.UTC) - dt.timedelta(days=1)), cache, controllers, filters)
             today_parsed = True
 
         current_date = next_day(current_date, controllers)
@@ -72,19 +73,33 @@ if __name__ == '__main__':
     ap = ArgumentParser(description='a daemon that runs and continuously collects data, storing it into the database')
     ap.add_argument('-c', '--config', type=pathlib.Path, default=pathlib.Path('../../config.json'),
                     help='the location of the settings file')
+    ap.add_argument('--news_alternative', action='store_true',
+                    help='indicates to use an alternative news source, finnhub')
     args = ap.parse_args()
 
     config = read_config(args.config)
 
     cache = SqliteAPI(config.db_location)
 
-    controllers = AlPolyHooStaticFilterAPI(config.alpaca_key, config.alpaca_secret,
-                                           config.polygon_key, True, [
-                                               StaticFloatFilter(upper_limit=10000000)
-                                           ], cache)
+    if args.news_alternative:
+        controllers = AlFinnPolyHooStaticFilterAPI(
+            config.alpaca_key, config.alpaca_secret, config.polygon_key, config.finnhub_key,
+            True,
+            [
+                StaticFloatFilter(upper_limit=10000000)
+            ], cache
+        )
+    else:
+        controllers = AlPolyHooStaticFilterAPI(
+            config.alpaca_key, config.alpaca_secret, config.polygon_key,
+            True,
+            [
+                StaticFloatFilter(upper_limit=10000000)
+            ], cache
+        )
 
     filters = [
-        ChangeSinceNewsFilter(controllers.market, min_limit=0.1)
+        ChangeSinceNewsFilter(controllers.market, controllers.news_api, min_limit=0.1)
     ]
 
     data_scraper(cache, controllers, filters)
