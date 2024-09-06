@@ -14,6 +14,9 @@ from pystonks.utils.config import read_config
 from pystonks.utils.processing import truncate_datetime
 
 
+SCRAPER_VERSION = '1.0.0'
+
+
 def get_tickers(date: dt.datetime, cache: SqliteAPI, controllers: UnifiedAPI, filters: List[TickerFilter]) -> List[str]:
     cache.disable_commiting()
     print('fetching ticker symbols...', end='')
@@ -75,7 +78,12 @@ if __name__ == '__main__':
                     help='the location of the settings file')
     ap.add_argument('--news_alternative', action='store_true',
                     help='indicates to use an alternative news source, finnhub')
+    ap.add_argument('--version', '-v', action='store_true', help='print version and exit')
     args = ap.parse_args()
+
+    if args.version:
+        print(f'scraper v{SCRAPER_VERSION}')
+        exit(0)
 
     config = read_config(args.config)
 
