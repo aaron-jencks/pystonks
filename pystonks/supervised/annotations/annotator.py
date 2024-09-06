@@ -20,7 +20,7 @@ from pystonks.daemons.screener import hscreener
 from pystonks.market.filter import ChangeSinceNewsFilter, TickerFilter, \
     StaticFloatFilter
 from pystonks.models import Bar
-from pystonks.supervised.annotations.cluster import AnnotatorCluster
+from pystonks.supervised.annotations.cluster import AnnotatorCluster, FinnAnnotatorCluster
 from pystonks.supervised.annotations.models import TradeActions, Annotation
 from pystonks.supervised.annotations.utils.annotations.annotator import Annotator
 from pystonks.supervised.annotations.utils.annotations.macd import MACDAnnotator
@@ -313,6 +313,7 @@ class Window:
         while self.ticker is None or len(self.previous_tickers) == 0:
             return
 
+        # TODO if the previous ticker was more than 24 hrs ago, this doesn't work correctly
         self.current_tickers.insert(0, self.ticker)
 
         original_ticker = self.ticker
@@ -599,6 +600,8 @@ if __name__ == '__main__':
     ap.add_argument('--bar_min', type=int, default=200,
                     help='the minimum number of bars needed to be returned for annotation')
     ap.add_argument('--dark', action='store_true', help='indicates to use dark theme friendly colors')
+    ap.add_argument('--news_alternative', action='store_true',
+                    help='indicates to use an alternative news source, finnhub')
     ap.add_argument('-m', '--model', type=Path, default=Path('./model.bin'),
                     help='the location of the stored model to use, if not present the peak annotator is used instead')
     ap.add_argument('--use_model', action='store_true', help='indicates to use the model if it exists')
@@ -651,13 +654,22 @@ if __name__ == '__main__':
     # Progress
     # aaaa
 
-    controllers = AnnotatorCluster(
-        config.db_location,
-        config.alpaca_key, config.alpaca_secret, config.polygon_key, config.finnhub_key,
-        [
-            StaticFloatFilter(upper_limit=10000000)
-        ]
-    )
+    if args.news_alternative:
+        controllers = FinnAnnotatorCluster(
+            config.db_location,
+            config.alpaca_key, config.alpaca_secret, config.polygon_key, config.finnhub_key,
+            [
+                StaticFloatFilter(upper_limit=10000000)
+            ]
+        )
+    else:
+        controllers = AnnotatorCluster(
+            config.db_location,
+            config.alpaca_key, config.alpaca_secret, config.polygon_key,
+            [
+                StaticFloatFilter(upper_limit=10000000)
+            ]
+        )
 
     filters = [
         ChangeSinceNewsFilter(controllers.market, controllers.news_api, min_limit=0.1)
