@@ -13,5 +13,5 @@ def place_on_avg(
         closes = [c for t, c in zip(data.times, data.closes) if cmn <= t <= cmx]
 
     cavg = sum(closes) / len(closes)
-    vdiff = (max(values) - min(values)) / 2
+    vdiff = sum(values) / len(values)   # (max(values) - min(values)) / 2
     return [v - vdiff + cavg for v in values]
