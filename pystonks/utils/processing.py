@@ -223,9 +223,29 @@ def calculate_derivatives(times: List[float], data: List[float]) -> Tuple[List[f
     return d1, d2
 
 
-def calculate_normalized_derivatives(times: List[float], data: List[float]) -> Tuple[List[float], List[float]]:
+def calculate_normalized_derivatives(
+        times: List[float], data: List[float]
+) -> Tuple[List[float], List[float]]:
     d1, d2 = calculate_derivatives(times, data)
     return normalize_bipolar(d1), normalize_bipolar(d2)
+
+
+def calculate_normalized_price_derivatives(
+        times: List[float], data: List[float], prices: List[float]
+) -> Tuple[List[float], List[float]]:
+    nd1 = [
+        (((data[i] - data[i - 1]) / ((times[i] - times[i - 1]) * prices[i-1])) if prices[i-1] != 0 else 0) * 100
+        for i in range(1, len(data))
+    ]
+
+    nd2 = [
+        ((
+            (data[i + 1] - 2 * data[i] + data[i - 1]) /
+            ((times[i + 1] - times[i]) * (times[i + 1] - times[i]) * (prices[i] - prices[i-1]))
+        ) if (prices[i] - prices[i-1]) != 0 else 0) * 100
+        for i in range(1, len(data) - 1)
+    ]
+    return nd1, nd2
 
 
 def normalize(data: List[float]) -> List[float]:

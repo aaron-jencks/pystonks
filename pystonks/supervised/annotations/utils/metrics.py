@@ -8,7 +8,7 @@ from pystonks.supervised.annotations.utils.processing import place_on_avg
 from pystonks.supervised.annotations.utils.tk_modules import SMAInfoModule, EMAInfoModule
 from pystonks.utils.gui.tk_modules import TkLabelModule
 from pystonks.utils.processing import calculate_normalized_derivatives, create_continuous_sma, create_continuous_ema, \
-    create_ema
+    create_ema, calculate_normalized_price_derivatives
 
 METRIC_HANDLER = Callable[[List[Bar]], Tuple[List[int], List[float]]]
 
@@ -50,8 +50,10 @@ class StockMetricModule(StockMetric, ABC):
         self.second_derivative = None
 
     def process_derivatives(self, data: GeneralStockPlotInfo):
-        times, data = self.get_data(data)
-        self.first_derivative, self.second_derivative = calculate_normalized_derivatives(times, data)
+        times, mdata = self.get_data(data)
+        self.first_derivative, self.second_derivative = calculate_normalized_price_derivatives(
+            times, mdata, data.closes
+        )
 
     def process_all(self, data: GeneralStockPlotInfo):
         self.get_data(data)
