@@ -254,10 +254,10 @@ class Window:
         self.__get_historical_data()
         pbars = generate_percentages_since_bar_from_bars(self.plot_data.first_bar, self.bars)
         self.plot_data.update_bars(pbars)
-        self.auto_annotator.process_annotations(self.entry_index, self.plot_data)
-        self.root_tk.title(f'Annotating stock market data for {self.ticker} on {self.date.strftime(SQL_DATE_FMT)}')
         for m in self.metric_dict:
             self.metric_dict[m].reset()
+        self.auto_annotator.process_annotations(self.entry_index, self.plot_data)
+        self.root_tk.title(f'Annotating stock market data for {self.ticker} on {self.date.strftime(SQL_DATE_FMT)}')
 
     def get_tickers(self):
         self.controllers.cache.disable_commiting()
