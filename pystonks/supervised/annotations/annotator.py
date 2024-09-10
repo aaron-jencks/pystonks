@@ -475,7 +475,7 @@ class Window:
             self.selected_time.set('Time: None')
         else:
             time, close, index = self.plot_state.selected
-            bar = self.bars[index+1]
+            bar = self.bars[index]
 
             self.selected_index.set(f'Index: {index}/{len(self.plot_data.times) - 1}')
             self.selected_open.set(f'Open: ${bar.open:0.2f}')
