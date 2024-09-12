@@ -155,13 +155,16 @@ class AutoAnnotationPlotter(StatedDefaultPlotter):
         if self.auto_annotations is None:
             return
 
+        ba = []
         buys = []
         sh = []
         sa = []
         other = []
 
         for idx, act in self.auto_annotations:
-            if act == TradeActions.BUY_HALF:
+            if act == TradeActions.BUY_ALL:
+                ba.append(idx)
+            elif act == TradeActions.BUY_HALF:
                 buys.append(idx)
             elif act == TradeActions.SELL_HALF:
                 sh.append(idx)
@@ -171,6 +174,7 @@ class AutoAnnotationPlotter(StatedDefaultPlotter):
                 other.append(idx)
 
         for idxs, c, m, lbl in [
+            (ba, 'lime', 'P', 'Buy All'),
             (buys, 'lime', 'v', 'Buy Half'),
             (sh, 'pink', '^', 'Sell Half'),
             (sa, 'pink', 'P', 'Sell All'),
