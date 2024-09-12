@@ -400,8 +400,16 @@ class Window:
 
     def __get_index_from_time(self, time: int):
         index = 0
+
         while index < len(self.plot_data.times) - 1 and self.plot_data.times[index] < time:
             index += 1
+
+        if index > 0 and self.plot_data.times[index] > time:
+            pdiff = time - self.plot_data.times[index-1]
+            cdiff = self.plot_data.times[index] - time
+            if pdiff < cdiff:
+                index -= 1
+
         return index
 
     def __update_selected_from_timestamp(self, time: int):
