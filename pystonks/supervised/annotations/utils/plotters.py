@@ -75,6 +75,8 @@ class DefaultStatePlotter(StatedDefaultPlotter):
     def plot(self, axes: StockAxesInfo, state: PlotStateInfo, data: GeneralStockPlotInfo):
         if state.selected is not None:
             x, y, index = state.selected
+            ymn, ymx = axes.default.get_ylim()
+            axes.default.plot([x, x], [ymn, ymx], c='magenta', zorder=7, linewidth=0.5, alpha=0.5)
             axes.default.scatter(x, y, c='magenta', zorder=7)
 
         if state.is_dragging:
