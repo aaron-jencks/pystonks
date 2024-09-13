@@ -185,4 +185,4 @@ class AutoAnnotationPlotter(StatedDefaultPlotter):
 
             x = [data.times[idx] for idx in idxs]
             y = [data.lows[idx] * 0.95 for idx in idxs]
-            axes.default.scatter(x, y, s=100, c=c, marker=m, label=f'Auto {lbl}')
+            axes.default.scatter(x, y, s=100, c=c, marker=m, label=f'Auto {lbl}', alpha=0.25)
