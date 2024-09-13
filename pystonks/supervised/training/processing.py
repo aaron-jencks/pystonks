@@ -40,13 +40,13 @@ def generate_input_data(balance: float, shares: int, use_percents: bool, input_s
 def handle_simulated_model_response(current_balance: float, current_shares: int,
                                     current_price: float, action: TradeActions) -> Tuple[float, int]:
     if action == TradeActions.BUY_ALL:
-        shares = int(math.floor(current_balance / current_price))
+        shares = int(math.floor(current_balance / current_price)) if current_price != 0 else 0
         cost = shares * current_price
         current_shares += shares
         current_balance -= cost
     elif action == TradeActions.BUY_HALF:
         h = current_balance / 2
-        hs = int(math.floor(h / current_price))
+        hs = int(math.floor(h / current_price)) if current_price != 0 else 0
         tc = hs * current_price
         current_shares += hs
         current_balance -= tc
