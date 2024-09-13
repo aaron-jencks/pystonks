@@ -32,7 +32,7 @@ class NeuralNetworkAnnotator(Annotator):
         actions = []
         with torch.no_grad():
             for di in range(len(data.bars[start:])):
-                dslice = data.bars[start:start + di + 1]
+                dslice = data.bars[:start + di + 1]
                 input_data = generate_input_data(self.balance, self.shares, USE_PERCENTS, self.inputs, dslice)
                 input_data = input_data.to(DEVICE)
                 pred = self.model(input_data)
