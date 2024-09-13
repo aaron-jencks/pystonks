@@ -387,7 +387,7 @@ def generate_percentages_since_previous_from_bars(bars: List[Bar]) -> List[Bar]:
         return []
 
     def percent_change(new: float, old: float) -> float:
-        return (new - old) / old
+        return ((new - old) / old) if old != 0 else 0
 
     result = []
     previous = bars[0]
