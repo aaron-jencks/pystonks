@@ -234,7 +234,7 @@ def calculate_normalized_price_derivatives(
         times: List[float], data: List[float], prices: List[float]
 ) -> Tuple[List[float], List[float]]:
     nd1 = [
-        (((data[i] - data[i - 1]) / ((times[i] - times[i - 1]) * prices[i-1])) if prices[i-1] != 0 else 0) * 100
+        (((data[i] - data[i - 1]) / ((times[i] - times[i - 1]) * abs(prices[i-1]))) if prices[i-1] != 0 else 0) * 100
         for i in range(1, len(data))
     ]
 
