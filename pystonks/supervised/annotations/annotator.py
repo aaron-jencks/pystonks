@@ -42,7 +42,7 @@ from pystonks.utils.processing import change_since_news, datetime_to_second_offs
     generate_percentages_since_bar_from_bars, trim_zero_bars
 
 
-ANNOTATOR_VERSION = '2.3.9'
+ANNOTATOR_VERSION = '2.3.10'
 
 
 class Window:
