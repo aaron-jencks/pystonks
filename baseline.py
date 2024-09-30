@@ -18,7 +18,7 @@ from pystonks.supervised.annotations.utils.tk_modules import EMAInfoModule
 from pystonks.utils.config import read_config
 from pystonks.utils.processing import truncate_datetime
 
-BASELINE_VERSION = '1.1.0'
+BASELINE_VERSION = '1.1.1'
 
 
 AlgorithmicProcessor = Callable[[str, UnifiedAPI, mp.Queue], None]
@@ -138,6 +138,11 @@ class BaselineModelExecutor:
 
     def loop(self):
         while True:
+            if not self.controllers.is_market_open():
+                print('market is closed...')
+                time.sleep(3600)
+                continue
+
             self.check_callback_queue()
             screened = self.get_tickers()
             self.dispatch_processors(screened)
