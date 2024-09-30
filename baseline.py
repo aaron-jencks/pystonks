@@ -1,8 +1,10 @@
 import argparse
 import datetime as dt
+import math
 import multiprocessing as mp
 import pathlib
 import queue
+import time
 from typing import List, Callable
 
 from pystonks.apis.alpolyhoo import AlPolyHooStaticFilterAPI, AlFinnPolyHooStaticFilterAPI
@@ -10,6 +12,9 @@ from pystonks.apis.sql import SqliteAPI
 from pystonks.daemons.screener import hscreener
 from pystonks.facades import UnifiedAPI
 from pystonks.market.filter import TickerFilter, StaticFloatFilter, ChangeSinceNewsFilter
+from pystonks.supervised.annotations.utils.metrics import EMAStockMetric
+from pystonks.supervised.annotations.utils.models import GeneralStockPlotInfo
+from pystonks.supervised.annotations.utils.tk_modules import EMAInfoModule
 from pystonks.utils.config import read_config
 from pystonks.utils.processing import truncate_datetime
 
@@ -19,7 +24,54 @@ BASELINE_VERSION = '1.0.0'
 AlgorithmicProcessor = Callable[[str, mp.Queue], None]
 
 
+def collect_current_data(ticker: str, api: UnifiedAPI) -> GeneralStockPlotInfo:
+    bars = api.bars(ticker)
+    news = api.news(ticker)
+    return GeneralStockPlotInfo(0, bars, news, [])
+
+
 def baseline_processor(ticker: str, api: UnifiedAPI, callback: mp.Queue):
+    info = collect_current_data(ticker, api)
+    ema = EMAStockMetric(EMAInfoModule(26, 2), 0, 0)
+    ema.process_all(info)
+
+    if ema.first_derivative[-1] <= 0:
+        callback.put(ticker)
+        return
+
+    price = api.quotes(ticker).ask_price * 1.05
+    shares = int(math.floor(100 / price))
+    api.buy(ticker, shares, price)  # buy roughly $100 worth of shares
+    print('bought {} shares of {} at ${.2f}'.format(shares, ticker, price))
+
+    start_index = len(ema.first_derivative)
+    sell_mark = 1.1
+    while shares > 0:
+        time.sleep(60)  # check once a minute
+        info = collect_current_data(ticker, api)
+        ema = EMAStockMetric(EMAInfoModule(26, 2), 0, 0)
+        ema.process_all(info)
+        derivative = ema.first_derivative[start_index:]
+        if len(derivative) == 0:
+            continue
+
+        sell_price = api.quotes(ticker).bid_price * 0.95
+        profit = sell_price / price
+        if any([d <= 0.004 for d in derivative]) and profit > 1.:  # sell at the peak
+            api.sell(ticker, shares, sell_price)
+            print('sold {} shares of {} at ${.2f}'.format(shares, ticker, sell_price))
+        elif profit >= sell_mark and shares > 10:  # sell half every 10%
+            api.sell(ticker, shares >> 1, sell_price)
+            print('hit profit mark {.2f%}, sold {} shares of {} at ${.2f}'.format(
+                sell_mark - 1., shares >> 1, ticker, sell_price
+            ))
+            shares >>= 1
+            sell_mark += 0.1
+
+        time.sleep(1)  # give api time to update shares
+
+        shares = api.shares(ticker)
+
     callback.put(ticker)
 
 
