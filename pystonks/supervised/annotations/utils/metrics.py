@@ -17,13 +17,28 @@ class StockMetric(ABC):
     def __init__(self):
         self.result: Optional[Tuple[List[int], List[float]]] = None
         self.enabled = True
+        self.first_derivative: Optional[List[float]] = None
+        self.second_derivative: Optional[List[float]] = None
 
     def reset(self):
         self.result = None
+        self.first_derivative = None
+        self.second_derivative = None
 
     @abstractmethod
     def process_data(self, data: GeneralStockPlotInfo) -> Tuple[List[int], List[float]]:
         pass
+
+    def process_derivatives(self, data: GeneralStockPlotInfo):
+        times, mdata = self.get_data(data)
+        self.first_derivative, self.second_derivative = calculate_normalized_price_derivatives(
+            times, mdata, data.closes
+        )
+
+    def process_all(self, data: GeneralStockPlotInfo):
+        self.get_data(data)
+        if self.first_derivative is None:
+            self.process_derivatives(data)
 
     def get_data(self, data: Optional[GeneralStockPlotInfo] = None) -> Tuple[List[int], List[float]]:
         if not self.result:
@@ -41,24 +56,6 @@ class StockMetricModule(StockMetric, ABC):
         self.labels = (raw_label, d1_label, d2_label)
         self.label_text = label
         self.label_format = label_format
-        self.first_derivative: Optional[List[float]] = None
-        self.second_derivative: Optional[List[float]] = None
-
-    def reset(self):
-        super().reset()
-        self.first_derivative = None
-        self.second_derivative = None
-
-    def process_derivatives(self, data: GeneralStockPlotInfo):
-        times, mdata = self.get_data(data)
-        self.first_derivative, self.second_derivative = calculate_normalized_price_derivatives(
-            times, mdata, data.closes
-        )
-
-    def process_all(self, data: GeneralStockPlotInfo):
-        self.get_data(data)
-        if self.first_derivative is None:
-            self.process_derivatives(data)
 
     def __find_timestamp_index(self, ts: float) -> int:
         X, _ = self.get_data()
