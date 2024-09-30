@@ -9,7 +9,7 @@ from typing import List, Callable
 
 from pystonks.apis.alpolyhoo import AlPolyHooStaticFilterAPI, AlFinnPolyHooStaticFilterAPI
 from pystonks.apis.sql import SqliteAPI
-from pystonks.daemons.screener import hscreener
+from pystonks.daemons.screener import hscreener, seq_screener
 from pystonks.facades import UnifiedAPI
 from pystonks.market.filter import TickerFilter, StaticFloatFilter, ChangeSinceNewsFilter
 from pystonks.supervised.annotations.utils.metrics import EMAStockMetric
@@ -21,7 +21,7 @@ from pystonks.utils.processing import truncate_datetime
 BASELINE_VERSION = '1.1.0'
 
 
-AlgorithmicProcessor = Callable[[str, mp.Queue], None]
+AlgorithmicProcessor = Callable[[str, UnifiedAPI, mp.Queue], None]
 
 
 def collect_current_data(ticker: str, api: UnifiedAPI) -> GeneralStockPlotInfo:
@@ -110,12 +110,12 @@ class BaselineModelExecutor:
         tickers = self.controllers.get_ticker_symbols(date)
         self.cache.commit()
         print('DONE')
-        hscreened = hscreener(tickers, self.filters, date)
-        print(f'Screened stocks result: \n' + "\n".join(hscreened))
+        screened = seq_screener(tickers, self.filters)
+        print(f'Screened stocks result: \n' + "\n".join(screened))
         self.cache.commit()
         self.cache.reset_connection()
         self.cache.enable_commiting()
-        return hscreened
+        return screened
 
     def check_callback_queue(self):
         while True:
@@ -196,5 +196,5 @@ if __name__ == '__main__':
         ChangeSinceNewsFilter(controllers.market, controllers.news_api, min_limit=0.1)
     ]
 
-    daemon = BaselineModelExecutor(controllers, filters, baseline_processor)
+    daemon = BaselineModelExecutor(controllers, cache, filters, baseline_processor)
     daemon.loop()
