@@ -34,3 +34,12 @@ def hscreener(tickers: List[str], filters: List[TickerFilter], date: dt.datetime
     # print('DONE')
     # return [t for t, p in zip(tickers, passes) if p]
     return [t for t in tqdm(tickers, desc='screening stocks') if all([f.passes(t, date) for f in filters])]
+
+
+def seq_screener(tickers: List[str], filters: List[TickerFilter]) -> List[str]:
+    # print('screening stocks...', end='')
+    # with mp.Pool() as p:
+    #     passes = p.starmap(ticker_passes, [(t, date, filters) for t in tickers])
+    # print('DONE')
+    # return [t for t, p in zip(tickers, passes) if p]
+    return [t for t in tqdm(tickers, desc='screening stocks') if all([f.passes(t) for f in filters])]

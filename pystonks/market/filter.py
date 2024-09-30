@@ -9,7 +9,7 @@ from pystonks.utils.processing import change_since_news, fill_in_sparse_bars, tr
 
 class TickerFilter(ABC):
     @abstractmethod
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         pass
 
 
@@ -51,7 +51,7 @@ class FloatFilter(IntervalFilter):
         super().__init__(lower_limit, upper_limit)
         self.symbol_client = symbol_api
 
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         fl = self.symbol_client.get_float(symbol)
         return self.in_interval(fl)
 
@@ -61,7 +61,7 @@ class CurrentPriceFilter(IntervalFilter):
         super().__init__(lower_limit, upper_limit)
         self.symbol_client = symbol_api
 
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         t = self.symbol_client.get_ticker(symbol) \
             if day is None else self.symbol_client.historical_ticker(symbol, day, dt.timedelta(days=1))[0]
         return self.in_interval(t.current_price)
@@ -80,7 +80,7 @@ class FloatPriceFilter(TickerFilter):
     def in_interval(self, value: float, lower: float, upper: float) -> bool:
         return (lower < 0 or value >= lower) and (upper < 0 or value <= upper)
 
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         t = self.symbol_client.get_ticker(symbol) \
             if day is None else self.symbol_client.historical_ticker(symbol, day, dt.timedelta(days=1))[0]
         return (self.in_interval(t.current_price, self.price_lower, self.price_upper) and
@@ -92,7 +92,7 @@ class ChangeSinceOpenFilter(IntervalFilter):
         super().__init__(lower_limit, upper_limit)
         self.symbol_client = symbol_api
 
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         t = self.symbol_client.get_ticker(symbol) \
             if day is None else self.symbol_client.historical_ticker(symbol, day, dt.timedelta(days=1))[0]
         return self.in_interval(t.current_price)
@@ -105,7 +105,7 @@ class ChangeSinceNewsFilter(TickerFilter):
         self.market_client = market_api
         self.news_client = news_api
 
-    def passes(self, symbol: str, day: Optional[dt.datetime]) -> bool:
+    def passes(self, symbol: str, day: Optional[dt.datetime] = None) -> bool:
         if day is not None:
             news = self.news_client.historical_news(symbol, day, dt.timedelta(days=1))
             if len(news) == 0:
