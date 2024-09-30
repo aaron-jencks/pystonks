@@ -148,7 +148,7 @@ class AlpacaTrader(CachedClass, MarketDataAPI, TradingAPI, NewsDataAPI):
             symbols=symbol,
             include_content=False,
             include_contentless=False
-        )).news
+        )).data['news']
         return [News(symbol, n.created_at, int(n.id), n.author, n.headline, n.url, n.updated_at) for n in ns]
 
     def historical_bars(self, symbol: str,
