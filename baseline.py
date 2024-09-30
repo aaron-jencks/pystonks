@@ -46,18 +46,35 @@ def baseline_processor(ticker: str, api: UnifiedAPI, callback: mp.Queue):
 
     start_index = len(ema.first_derivative)
     sell_mark = 1.1
+    sell_all = False
+
     while shares > 0:
         time.sleep(60)  # check once a minute
+
+        # if market is closed, we'll just sleep until it's open for now
+        if not api.is_market_open():
+            sell_all = True
+            continue
+
+        sell_price = api.quotes(ticker).bid_price * 0.95
+        profit = sell_price / price
+
+        if sell_all:
+            api.sell(ticker, shares, sell_price)
+            print('sold {} shares of {} at ${.2f}'.format(shares, ticker, sell_price))
+            time.sleep(1)  # give api time to update shares
+            shares = api.shares(ticker)
+            continue
+
         info = collect_current_data(ticker, api)
         ema = EMAStockMetric(EMAInfoModule(26, 2), 0, 0)
         ema.process_all(info)
         derivative = ema.first_derivative[start_index:]
         if len(derivative) == 0:
+            shares = api.shares(ticker)
             continue
 
-        sell_price = api.quotes(ticker).bid_price * 0.95
-        profit = sell_price / price
-        if any([d <= 0.004 for d in derivative]) and profit > 1.:  # sell at the peak
+        if any([d <= 0.004 for d in derivative]):  # sell at the peak, or if slope is negative
             api.sell(ticker, shares, sell_price)
             print('sold {} shares of {} at ${.2f}'.format(shares, ticker, sell_price))
         elif profit >= sell_mark and shares > 10:  # sell half every 10%
@@ -69,7 +86,6 @@ def baseline_processor(ticker: str, api: UnifiedAPI, callback: mp.Queue):
             sell_mark += 0.1
 
         time.sleep(1)  # give api time to update shares
-
         shares = api.shares(ticker)
 
     callback.put(ticker)
@@ -105,6 +121,7 @@ class BaselineModelExecutor:
         while True:
             try:
                 ticker = self.callback_queue.get_nowait()
+                print(f'{ticker} has become available for processing again')
                 self.dispatched_symbols.remove(ticker)
             except queue.Empty:
                 return
