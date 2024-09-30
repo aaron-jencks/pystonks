@@ -120,6 +120,7 @@ class ChangeSinceNewsFilter(TickerFilter):
             if self.min <= 0:
                 return True
             bars = self.market_client.bars(symbol)
+            day = dt.datetime.now(dt.UTC)
         bars = fill_in_sparse_bars(
             truncate_datetime(day),
             truncate_datetime(day + dt.timedelta(days=1)),
