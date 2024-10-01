@@ -113,6 +113,12 @@ class ChangeSinceNewsFilter(TickerFilter):
             if self.min <= 0:
                 return True
             bars = self.market_client.historical_bars(symbol, day, dt.timedelta(days=1))
+            bars = fill_in_sparse_bars(
+                truncate_datetime(day),
+                truncate_datetime(day + dt.timedelta(days=1)),
+                dt.timedelta(minutes=1),
+                bars
+            )
         else:
             news = self.news_client.news(symbol)
             if len(news) == 0:
@@ -120,12 +126,14 @@ class ChangeSinceNewsFilter(TickerFilter):
             if self.min <= 0:
                 return True
             bars = self.market_client.bars(symbol)
+            if len(bars) < 2:
+                return False
             day = dt.datetime.now(dt.UTC)
-        bars = fill_in_sparse_bars(
-            truncate_datetime(day),
-            truncate_datetime(day + dt.timedelta(days=1)),
-            dt.timedelta(minutes=1),
-            bars
-        )
+            bars = fill_in_sparse_bars(
+                truncate_datetime(day),
+                bars[-1].timestamp,
+                dt.timedelta(minutes=1),
+                bars
+            )
         csn = change_since_news(bars, news, self.min)[0]
         return csn > self.min
