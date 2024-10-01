@@ -140,7 +140,7 @@ class BaselineModelExecutor:
         while True:
             if not self.controllers.is_market_open():
                 print('market is closed...')
-                time.sleep(3600)
+                time.sleep(1800)
                 continue
 
             self.check_callback_queue()
