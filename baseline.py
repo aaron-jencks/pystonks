@@ -18,7 +18,7 @@ from pystonks.supervised.annotations.utils.tk_modules import EMAInfoModule
 from pystonks.utils.config import read_config
 from pystonks.utils.processing import truncate_datetime
 
-BASELINE_VERSION = '1.1.1'
+BASELINE_VERSION = '1.1.2'
 
 
 AlgorithmicProcessor = Callable[[str, UnifiedAPI, mp.Queue], None]
