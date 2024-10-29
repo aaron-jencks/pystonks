@@ -1,134 +1,272 @@
 @startuml object_model
-package trading {
-    package trader {
-        enum TradeActionType {
-            BUY_HALF
-            BUY_ALL
-            BUY_10
-            BUY_100
-            BUY_1000
-            SELL_HALF
-            SELL_ALL
-            SELL_10
-            SELL_100
-            SELL_1000
-            HOLD
-        }
-
-        interface Trader {
-            + balance() -> float
-            + shares() -> int
-            + position() -> Position
-            + buy(count: int, price: float)
-            + sell(count: int, price: float)
-            + cancel_all()
-            + hbars(start: datetime, duration: timedelta, buckets: TimeFrame) -> BarSet
-            + bars(buckets: TimeFrame) -> BarSet
-            + hquotes(start: datetime, duration: timedelta) -> QuoteSet
-            + quotes() -> Quote
-            + htrades(start: datetime, duration: timedelta) -> Trades
-            + trades() -> Trades
-        }
+package facades {
+    interface TradingAPI {
+        + buy(symbol, quantity, price)
+        + sell(symbol, count, price)
+        + balance() float
+        + shares(symbol) int
     }
 
-    package alpaca {
-        class AlpacaTrader {
-            + api_key: str
-            + api_secret: str
-            + paper: bool
-            + symbol: str
-            - mdclient: StockHistoricalDataClient
-            - tclient: TradingClient
-
-            + connect()
-            - handle_request()
-        }
-
-        Trader <-- AlpacaTrader
+    interface HistoricalNewsDataAPI {
+        + historical_news(symbol, start, duration) List[News]
     }
 
-    package simulated {
-        object SimulationResults {
-            + total_profit: float
-            + buys: int
-            + sells: int
-            + mistakes: int
-            + bottoms: int
-            + entries: int
-            + exits: int
-            + cancels: int
-            + holds: int
-        }
-
-        class SimulatedTrader {
-            + init_cash: float
-            + cash: float
-            + owned: int
-            + buys: int
-            + sells: int
-            + mistakes: int
-            + bottoms: int
-            + entries: int
-            + exits: int
-            + cancels: int
-
-            + reset()
-            + get_results() -> SimulationResults
-        }
-
-        AlpacaTrader <|-- SimulatedTrader
-        SimulationResults <.. SimulatedTrader
+    interface HistoricalMarketDataAPI {
+        + was_market_open(date) bool
+        + historical_bars(symbol start, duration, buckets) List[Bar]
+        + historical_trades(symbol, start, duration) List[Trade]
+        + historical_quotes(symbol, start, duration) List[Quote]
     }
 
-    package meta {
-        package filters {
-            interface TickerFilter {
-                +passes(symbol: str, float: int, day: Optional[datetime]) -> bool
+    interface NewsDataAPI {
+        + news(symbol) List[News]
+    }
+
+    HistoricalNewsDataAPI <-- NewsDataAPI
+
+    interface MarketDataAPI {
+        + is_market_open() bool
+        + bars(symbol, buckets) List[Bar]
+        + trades(symbol) List[Trade]
+        + quotes(symbol) Quote
+    }
+
+    HistoricalMarketDataAPI <-- MarketDataAPI
+
+    interface SymbolDataAPI {
+        + get_ticker_symbols(timestamp) List[str]
+        + get_float(symbol) int
+        + get_floats(symbols) Dict[str, int]
+        + get_ticker(symbol) TickerMeta
+        + historical_ticker(symbol, start, duration) List[TickerMeta]
+    }
+
+    class UnififedAPI {
+        + trader
+        + market
+        + symbols
+        + news_api
+    }
+
+    TradingAPI <-- UnififedAPI
+    MarketDataAPI <-- UnififedAPI
+    SymbolDataAPI <-- UnififedAPI
+    NewsDataAPI <-- UnififedAPI
+}
+package models {
+    class SymbolData {
+        + symbol
+    }
+
+    class HistoricalData {
+        + timestamp
+    }
+
+    SymbolData --|> HistoricalData
+
+    class Bar {
+        + open
+        + close
+        + high
+        + low
+        + volume
+
+        + zero() bool
+        + tradeless() bool
+    }
+
+    HistoricalData --|> Bar
+
+    class Trade {
+        + exchange
+        + count
+        + price
+    }
+
+    HistoricalData --|> Trade
+
+    class Quote {
+        + ask_exchange
+        + ask_size
+        + ask_price
+        + bid_exchange
+        + bid_size
+        + bid_price
+    }
+
+    SymbolData --|> Quote
+
+    class HistoricalQuote {
+        + ask_exchange
+        + ask_size
+        + ask_price
+        + bid_exchange
+        + bid_size
+        + bid_price
+    }
+
+    HistoricalData --|> HistoricalQuote
+
+    class News {
+        + news_id
+        + author
+        + headline
+        + url
+        + updated_at
+    }
+
+    HistoricalData --|> News
+
+    class TickerMeta {
+        + symbol
+        + date
+        + float
+        + current_price
+        + open
+        + change_since_open
+    }
+}
+
+package utils {
+    package structures {
+        package caching {
+            interface ReadOnlyCacheAPI {
+                + select(name, columns, condition, extras, params) List[tuple]
+                + exists(name, columns, condition, params) bool
+                + custom_query(query, params) List[tuple]
             }
 
-            class FloatFilter {
-                + limit: int
+            interface CacheAPI {
+                + reset_connection()
+                + create_table(name, definition)
+                + delete_table(name)
+                + insert_row(name, parameters, columns, collision_resolution)
+                + insert_rows(name, parameters, columns, collision_resolution)
+                + custom_query(query, params)
+                + custom_nr_query(query, params, commit)
             }
 
-            TickerFilter <-- FloatFilter
+            ReadOnlyCacheAPI <-- CacheAPI
 
-            class YahooFilter {
-                + price: float
-                + cso: float
+            abstract class CachedClass {
+                + db: CacheAPI
+
+                + setup_tables()
+                + cache_check(name, columns, condition, params) bool
+                + cache_lookup(name, columns, condition, extras, params) List[tuple]
+                + cache_save(name, params, columns, force)
+                + cache_save_many(name, params, columns, force)
             }
 
-            TickerFilter <-- YahooFilter
-        }
-        package ticker {
-            class Ticker {
-                + symbol: str
-                + float: int
-                + current_price: float
-                + change_since_open: float
+            class ReadOnlyCachedClass {
+                + db: ReadOnlyCacheAPI
+
+                + cache_check(name, columns, condition, params) bool
+                + cache_lookup(name, columns, condition, extras, params) List[tuple]
             }
-
-            abstract class TickerFetcher {
-                + filters: []TickerFilter
-                + tickers(blacklist: Set[str]) -> []Ticker
-                + htickers(day: datetime, blacklist: Set[str]) -> []Ticker
-                + check_filters(symbol: str, float: int, day: Optional[datetime]) -> bool
-            }
-
-            TickerFilter <.. TickerFetcher
-            Ticker <.. TickerFetcher
-        }
-
-        package polyhoo {
-            class PolyHooTicker {
-                + poly_key: str
-                + float_cache: Path
-            }
-
-            TickerFetcher <-- PolyHooTicker
         }
     }
 }
 
-package screening {
+package trading {
+    package alpaca {
+        class AlpacaTrader {
+            + api_key
+            + api_secret
+            + paper
+            - mdclient
+            - tclient
+            - nclient
+            + last_req
+
+            - connect()
+            - handle_request()
+            - check_exists(tbl_pre, symbol, date) bool
+            - save_exists(tbl_pre, symbol, date)
+            + cancel_all()
+            + get_current_price(symbol) float
+            + position(symbol) Position
+        }
+
+        CachedClass --|> AlpacaTrader
+        MarketDataAPI <-- AlpacaTrader
+        TradingAPI <-- AlpacaTrader
+        NewsDataAPI <-- AlpacaTrader
+
+        class AlpacaTraderManualBars
+
+        AlpacaTrader --|> AlpacaTraderManualBars
+    }
+}
+
+package market {
+    package polyhoo {
+        class PolyHooSymbolData {
+            + polygon_key
+
+            + is_delisted(symbol, d) bool
+        }
+
+        CachedClass --|> PolyHooSymbolData
+        SymbolDataAPI <-- PolyHooSymbolData
+
+        class StaticFilteredPolyHooSymbolData {
+            + filters
+        }
+
+        PolyHooSymbolData --|> StaticFilteredPolyHooSymbolData
+    }
+}
+
+package apis {
+    package alpolyhoo {
+        class AlPolyHooAPI
+        UnififedAPI --|> AlPolyHooAPI
+
+        class AlPolyHooStaticFilterAPI
+        UnififedAPI --|> AlPolyHooStaticFilterAPI
+
+        class AlFinnPolyHooStaticFilterAPI
+        UnififedAPI --|> AlFinnPolyHooStaticFilterAPI
+    }
+
+    package sql {
+        class SqliteController {
+            + loc
+            - conn
+            + can_commit
+
+            + connect()
+            + commit()
+            + close()
+            - start_query(query, params) Cursor
+            - finish_query(commit, cur)
+            + nr_query(query, params, commit)
+            + query(query, params, commit) list
+            + nr_query_many(query, params, commit)
+        }
+
+        class ReadOnlySqliteController {
+            + loc
+
+            + query(query, params) list
+        }
+
+        class SqliteAPI {
+            - conn
+
+            + commit()
+            + disable_commiting()
+            + enable_commiting()
+        }
+
+        CacheAPI <-- SqliteAPI
+
+        class ReadOnlySqliteAPI {
+            - conn
+        }
+
+        ReadOnlyCacheAPI <-- ReadOnlySqliteAPI
+    }
 }
 @enduml
