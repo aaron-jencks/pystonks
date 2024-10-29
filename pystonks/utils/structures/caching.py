@@ -40,10 +40,6 @@ class CacheAPI(ReadOnlyCacheAPI, ABC):
         pass
 
     @abstractmethod
-    def custom_query(self, query: str, params: Optional[tuple] = None, commit: bool = False) -> List[tuple]:
-        pass
-
-    @abstractmethod
     def custom_nr_query(self, query: str, params: Optional[tuple] = None, commit: bool = False):
         pass
 
